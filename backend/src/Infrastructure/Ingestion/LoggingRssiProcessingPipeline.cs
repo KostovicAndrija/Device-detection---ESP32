@@ -7,13 +7,22 @@ public sealed class LoggingRssiProcessingPipeline(ILogger<LoggingRssiProcessingP
 {
     public Task ProcessAsync(RssiIngressMessage message, CancellationToken cancellationToken = default)
     {
+        var deviceHash = SanitizeForLog(message.DeviceHash);
+        var sensorId = SanitizeForLog(message.SensorId);
+        var sessionId = SanitizeForLog(message.SessionId ?? "n/a");
+
         logger.LogInformation(
             "Processed RSSI reading for {DeviceHash} from sensor {SensorId} ({Rssi}) in session {SessionId}",
-            message.DeviceHash,
-            message.SensorId,
+            deviceHash,
+            sensorId,
             message.Rssi,
-            message.SessionId ?? "n/a");
+            sessionId);
 
         return Task.CompletedTask;
     }
+
+    private static string SanitizeForLog(string value)
+        => value
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal);
 }
