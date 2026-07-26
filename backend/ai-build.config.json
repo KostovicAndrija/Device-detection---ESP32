@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "name": "device-detection-backend-ai-build",
+  "stack": ".NET 9",
+  "workingDirectory": "backend",
+  "solution": "DeviceDetection.slnx",
+  "commands": [
+    "dotnet restore DeviceDetection.slnx",
+    "dotnet build DeviceDetection.slnx --configuration Release --no-restore",
+    "dotnet test DeviceDetection.slnx --configuration Release --no-build"
+  ],
+  "artifacts": [
+    "src/Api/bin/Release/net9.0",
+    "src/Worker/bin/Release/net9.0"
+  ],
+  "qualityGates": {
+    "requireBuildSuccess": true,
+    "requireTestsSuccess": true
+  }
+}

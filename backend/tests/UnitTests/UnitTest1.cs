@@ -9,7 +9,7 @@ public class UnitTest1
     {
         var pipeline = new FakePipeline();
         var service = new RssiIngestionService(pipeline);
-        var message = new RssiIngressMessage("device-hash", "sensor-1", "session-1", -64, DateTimeOffset.UtcNow);
+        var message = new RssiIngressMessage("device-id", "sensor-1", "session-1", "wifi", -64, DateTimeOffset.UtcNow);
 
         await service.IngestAsync(message);
 

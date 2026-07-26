@@ -15,6 +15,20 @@ Ovaj repozitorij sada sadrži početnu arhitekturu sistema iz zahtjeva:
   - feature-based struktura (`dashboard`, `floor-map`, `devices`, `alerts`, `whitelist`, `reports`)
   - `core` servisni sloj i `layouts`
 
+## Dokumentacija
+
+- `docs/planning/plan-realizacije.md`
+- `docs/planning/taskovi-realizacije.md`
+- `docs/spec/specifikacija-implementacije.md`
+- `docs/guidelines/best-practices-be-fe.md`
+
+## AI build konfiguracija
+
+- Backend build konfiguracija: `backend/ai-build.config.json`
+- Frontend build konfiguracija: `frontend/ai-build.config.json`
+- GitHub Actions backend workflow: `.github/workflows/ai-build-backend.yml`
+- GitHub Actions frontend workflow: `.github/workflows/ai-build-frontend.yml`
+
 ## Pokretanje
 
 ### Backend

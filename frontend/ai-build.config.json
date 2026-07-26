@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "name": "device-detection-frontend-ai-build",
+  "stack": "Angular 20",
+  "workingDirectory": "frontend",
+  "commands": [
+    "npm ci",
+    "npm run build -- --configuration production"
+  ],
+  "artifacts": [
+    "dist"
+  ],
+  "qualityGates": {
+    "requireBuildSuccess": true
+  }
+}

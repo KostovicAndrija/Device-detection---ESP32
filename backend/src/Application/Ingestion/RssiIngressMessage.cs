@@ -1,8 +1,9 @@
 namespace Application.Ingestion;
 
 public sealed record RssiIngressMessage(
-    string DeviceHash,
+    string DeviceIdentifier,
     string SensorId,
     string? SessionId,
+    string SignalType,
     double Rssi,
     DateTimeOffset CreatedAt);

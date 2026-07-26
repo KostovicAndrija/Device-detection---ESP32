@@ -1,0 +1,78 @@
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Infrastructure.Persistence;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public DbSet<Device> Devices => Set<Device>();
+    public DbSet<DeviceObservation> DeviceObservations => Set<DeviceObservation>();
+    public DbSet<ExamSession> ExamSessions => Set<ExamSession>();
+    public DbSet<Alert> Alerts => Set<Alert>();
+    public DbSet<WhitelistEntry> WhitelistEntries => Set<WhitelistEntry>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Device>(entity =>
+        {
+            entity.ToTable("devices");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.HashId).HasColumnName("hash_id").HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Type).HasColumnName("type").HasMaxLength(50).IsRequired();
+            entity.Property(x => x.FirstSeenAt).HasColumnName("first_seen_at").IsRequired();
+            entity.Property(x => x.LastSeenAt).HasColumnName("last_seen_at").IsRequired();
+            entity.HasIndex(x => x.HashId).IsUnique();
+            entity.HasIndex(x => x.LastSeenAt);
+        });
+
+        modelBuilder.Entity<DeviceObservation>(entity =>
+        {
+            entity.ToTable("device_observations");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DeviceId).HasColumnName("device_id").IsRequired();
+            entity.Property(x => x.SensorId).HasColumnName("sensor_id").HasMaxLength(64).IsRequired();
+            entity.Property(x => x.SessionId).HasColumnName("session_id").HasMaxLength(128);
+            entity.Property(x => x.SignalType).HasColumnName("signal_type").HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Rssi).HasColumnName("rssi").IsRequired();
+            entity.Property(x => x.CapturedAt).HasColumnName("captured_at").IsRequired();
+            entity.HasIndex(x => x.CapturedAt);
+            entity.HasIndex(x => new { x.SessionId, x.CapturedAt });
+        });
+
+        modelBuilder.Entity<ExamSession>(entity =>
+        {
+            entity.ToTable("exam_sessions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
+            entity.Property(x => x.RoomId).HasColumnName("room_id").HasMaxLength(64).IsRequired();
+            entity.Property(x => x.StartsAt).HasColumnName("starts_at").IsRequired();
+            entity.Property(x => x.EndsAt).HasColumnName("ends_at");
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(32).IsRequired();
+        });
+
+        modelBuilder.Entity<Alert>(entity =>
+        {
+            entity.ToTable("alerts");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DeviceId).HasColumnName("device_id").IsRequired();
+            entity.Property(x => x.SessionId).HasColumnName("session_id").HasMaxLength(128);
+            entity.Property(x => x.RiskScore).HasColumnName("risk_score").IsRequired();
+            entity.Property(x => x.Reason).HasColumnName("reason").HasMaxLength(300).IsRequired();
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+            entity.Property(x => x.AcknowledgedAt).HasColumnName("acknowledged_at");
+            entity.HasIndex(x => new { x.SessionId, x.CreatedAt });
+        });
+
+        modelBuilder.Entity<WhitelistEntry>(entity =>
+        {
+            entity.ToTable("whitelist_entries");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SessionId).HasColumnName("session_id").HasMaxLength(128).IsRequired();
+            entity.Property(x => x.StudentRef).HasColumnName("student_ref").HasMaxLength(128).IsRequired();
+            entity.Property(x => x.DeviceHash).HasColumnName("device_hash").HasMaxLength(256).IsRequired();
+            entity.Property(x => x.ValidFrom).HasColumnName("valid_from").IsRequired();
+            entity.Property(x => x.ValidTo).HasColumnName("valid_to");
+            entity.HasIndex(x => new { x.SessionId, x.DeviceHash });
+        });
+    }
+}
