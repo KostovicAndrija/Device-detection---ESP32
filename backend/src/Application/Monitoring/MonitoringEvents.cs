@@ -15,3 +15,10 @@ public sealed record AlertCreatedEvent(
     int RiskScore,
     string Reason,
     DateTimeOffset CreatedAt);
+
+public sealed record AlertAcknowledgedEvent(Guid AlertId, DateTimeOffset AcknowledgedAt);
+
+public sealed record SessionStateChangedEvent(
+    Guid SessionId,
+    string Status,
+    DateTimeOffset ChangedAt);

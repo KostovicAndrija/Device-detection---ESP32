@@ -17,6 +17,9 @@ public static class DependencyInjection
         services.AddScoped<IRssiIngestionService, RssiIngestionService>();
         services.AddScoped<IRiskScoringService, RiskScoringService>();
         services.AddScoped<ILocalizationService, LocalizationService>();
+        services.AddScoped<IPositionQueryService, PositionQueryService>();
+        services.AddSingleton<IPositionSmoother, KalmanPositionSmoother>();
+        services.AddOptions<LocalizationOptions>();
         services.AddScoped<IExamSessionService, ExamSessionService>();
         services.AddScoped<IWhitelistService, WhitelistService>();
         services.AddScoped<IReportingService, ReportingService>();

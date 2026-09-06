@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 import { Alerts } from './alerts';
 
@@ -8,7 +9,8 @@ describe('Alerts', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Alerts]
+      imports: [Alerts],
+      providers: [provideHttpClient()]
     })
     .compileComponents();
 

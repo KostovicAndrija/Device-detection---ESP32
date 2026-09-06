@@ -26,10 +26,14 @@ public sealed class WhitelistService(
         return Map(entry);
     }
 
-    public async Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveAsync(
+        Guid id,
+        string? expectedSessionId = null,
+        CancellationToken cancellationToken = default)
     {
         var entry = await repository.GetByIdAsync(id, cancellationToken);
-        if (entry is null)
+        if (entry is null ||
+            (!string.IsNullOrWhiteSpace(expectedSessionId) && entry.SessionId != expectedSessionId))
         {
             return false;
         }

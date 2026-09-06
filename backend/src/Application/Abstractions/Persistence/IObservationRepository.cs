@@ -6,4 +6,5 @@ public interface IObservationRepository
 {
     Task AddAsync(DeviceObservation observation, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DeviceObservation>> GetBySessionAsync(string sessionId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsByExternalIdAsync(string externalId, CancellationToken cancellationToken = default);
 }

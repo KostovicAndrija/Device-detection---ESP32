@@ -6,4 +6,5 @@ public sealed record RssiIngressMessage(
     string? SessionId,
     string SignalType,
     double Rssi,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? EventId = null);

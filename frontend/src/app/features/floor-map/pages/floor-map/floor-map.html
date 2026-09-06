@@ -1,1 +1,14 @@
-<p>floor-map works!</p>
+<section class="page">
+  <header class="page-header"><div><p class="eyebrow">Lokalizacija</p><h2>Mapa prostorije</h2></div>
+    <div class="toolbar"><select [(ngModel)]="sessionId" (ngModelChange)="load()">@for (s of sessions(); track s.id) {<option [value]="s.id">{{s.name}}</option>}</select><button (click)="load()">Osveži</button></div></header>
+  <div class="panel room">
+    <span class="sensor s1">S1</span><span class="sensor s2">S2</span><span class="sensor s3">S3</span>
+    @for (position of positions(); track position.deviceId) {
+      <button class="device-dot" [style.left]="left(position.x)" [style.top]="top(position.y)"
+        title="Uređaj {{position.deviceId}} · confidence {{position.confidence}}">
+        {{position.confidence * 100 | number:'1.0-0'}}%
+      </button>
+    }
+  </div>
+  <p class="muted">S1/S2/S3 su senzori. Tačke prikazuju procenjenu poziciju i confidence.</p>
+</section>

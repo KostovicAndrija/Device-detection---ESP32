@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 import { FloorMap } from './floor-map';
 
@@ -8,7 +9,8 @@ describe('FloorMap', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FloorMap]
+      imports: [FloorMap],
+      providers: [provideHttpClient()]
     })
     .compileComponents();
 

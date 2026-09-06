@@ -10,9 +10,21 @@ namespace Api.Controllers;
 public sealed class AuthController(TokenService tokenService) : ControllerBase
 {
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
     {
-        if (!tokenService.ValidateCredentials(request.Username, request.Password))
+        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Username and password are required.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        var user = await tokenService.ValidateCredentialsAsync(request.Username, request.Password, cancellationToken);
+        if (user is null)
         {
             return Unauthorized(new ProblemDetails
             {
@@ -21,33 +33,37 @@ public sealed class AuthController(TokenService tokenService) : ControllerBase
             });
         }
 
-        var tokens = tokenService.Issue(request.Username.Trim());
+        var tokens = await tokenService.IssueAsync(user, cancellationToken);
         return Ok(new AuthResponse(tokens.AccessToken, tokens.RefreshToken, tokens.ExpiresAt));
     }
 
     [HttpPost("refresh")]
-    public IActionResult Refresh([FromBody] RefreshRequest request)
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshRequest request,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
             return BadRequest("Refresh token is required.");
         }
 
-        var tokens = tokenService.Refresh(request.RefreshToken);
+        var tokens = await tokenService.RefreshAsync(request.RefreshToken, cancellationToken);
         return tokens is null
             ? Unauthorized()
             : Ok(new AuthResponse(tokens.AccessToken, tokens.RefreshToken, tokens.ExpiresAt));
     }
 
     [HttpPost("revoke")]
-    public IActionResult Revoke([FromBody] RefreshRequest request)
+    public async Task<IActionResult> Revoke(
+        [FromBody] RefreshRequest request,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
             return BadRequest("Refresh token is required.");
         }
 
-        return tokenService.Revoke(request.RefreshToken) ? NoContent() : NotFound();
+        return await tokenService.RevokeAsync(request.RefreshToken, cancellationToken) ? NoContent() : NotFound();
     }
 
     public sealed record LoginRequest(string Username, string Password);

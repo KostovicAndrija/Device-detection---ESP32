@@ -14,4 +14,12 @@ public sealed class ExamSessionRepository(AppDbContext dbContext) : IExamSession
 
     public Task AddAsync(ExamSession session, CancellationToken cancellationToken = default)
         => dbContext.ExamSessions.AddAsync(session, cancellationToken).AsTask();
+
+    public Task<bool> HasActiveSessionInRoomAsync(
+        string roomId,
+        Guid exceptId,
+        CancellationToken cancellationToken = default)
+        => dbContext.ExamSessions.AnyAsync(
+            x => x.RoomId == roomId && x.Status == "active" && x.Id != exceptId,
+            cancellationToken);
 }

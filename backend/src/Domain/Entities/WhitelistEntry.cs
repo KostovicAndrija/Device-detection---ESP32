@@ -35,6 +35,11 @@ public sealed class WhitelistEntry
             throw new ArgumentException("Device hash is required.", nameof(deviceHash));
         }
 
+        if (validTo.HasValue && validTo <= validFrom)
+        {
+            throw new ArgumentException("Valid-to must be later than valid-from.", nameof(validTo));
+        }
+
         return new WhitelistEntry
         {
             SessionId = sessionId.Trim(),

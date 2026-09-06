@@ -41,7 +41,8 @@ public sealed class MqttWorker(
                     SessionId: payload.SessionId,
                     SignalType: payload.SignalType,
                     Rssi: payload.Rssi,
-                    CreatedAt: payload.Timestamp ?? DateTimeOffset.UtcNow);
+                    CreatedAt: payload.Timestamp ?? DateTimeOffset.UtcNow,
+                    EventId: payload.EventId);
 
                 await ingestionService.IngestAsync(ingressMessage, stoppingToken);
                 logger.LogInformation("Processed MQTT message from {SensorId} with RSSI {Rssi}", payload.SensorId, payload.Rssi);
@@ -83,5 +84,6 @@ public sealed class MqttWorker(
         string? SessionId,
         string SignalType,
         double Rssi,
-        DateTimeOffset? Timestamp);
+        DateTimeOffset? Timestamp,
+        string? EventId);
 }

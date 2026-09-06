@@ -1,9 +1,13 @@
 using Application.Abstractions.Persistence;
+using Application.Monitoring;
 using Domain.Entities;
 
 namespace Application.Sessions;
 
-public sealed class ExamSessionService(IExamSessionRepository repository, IAppUnitOfWork unitOfWork) : IExamSessionService
+public sealed class ExamSessionService(
+    IExamSessionRepository repository,
+    IAppUnitOfWork unitOfWork,
+    IMonitoringEventPublisher monitoringEventPublisher) : IExamSessionService
 {
     public async Task<SessionDto> CreateAsync(CreateSessionRequest request, CancellationToken cancellationToken = default)
     {
@@ -19,6 +23,12 @@ public sealed class ExamSessionService(IExamSessionRepository repository, IAppUn
         return sessions.Select(Map).ToList();
     }
 
+    public async Task<SessionDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var session = await repository.GetByIdAsync(id, cancellationToken);
+        return session is null ? null : Map(session);
+    }
+
     public async Task<SessionDto?> StartAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var session = await repository.GetByIdAsync(id, cancellationToken);
@@ -27,8 +37,16 @@ public sealed class ExamSessionService(IExamSessionRepository repository, IAppUn
             return null;
         }
 
+        if (await repository.HasActiveSessionInRoomAsync(session.RoomId, session.Id, cancellationToken))
+        {
+            throw new InvalidOperationException("Another session is already active in this room.");
+        }
+
         session.Start(DateTimeOffset.UtcNow);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await monitoringEventPublisher.PublishSessionStateChangedAsync(
+            new SessionStateChangedEvent(session.Id, session.Status, DateTimeOffset.UtcNow),
+            cancellationToken);
         return Map(session);
     }
 
@@ -42,6 +60,9 @@ public sealed class ExamSessionService(IExamSessionRepository repository, IAppUn
 
         session.Stop(DateTimeOffset.UtcNow);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await monitoringEventPublisher.PublishSessionStateChangedAsync(
+            new SessionStateChangedEvent(session.Id, session.Status, DateTimeOffset.UtcNow),
+            cancellationToken);
         return Map(session);
     }
 

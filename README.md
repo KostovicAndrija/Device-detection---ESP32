@@ -1,47 +1,78 @@
-# Device-detection---ESP32
+# ESP32 Device Detection
 
-Ovaj repozitorij sada sadrži početnu arhitekturu sistema iz zahtjeva:
+Sistem za pasivnu detekciju Wi-Fi/BLE aktivnosti tokom ispitnih sesija. ESP32 senzori šalju RSSI metapodatke kroz MQTT, .NET worker ih obrađuje i čuva u PostgreSQL, a Angular dashboard prikazuje uređaje, alarme i procenjene pozicije u realnom vremenu.
 
-- **backend/**
-  - `src/Api` (ASP.NET Core Web API + SignalR hub + auth i ingestion endpointi)
-  - `src/Application` (use-case sloj i ingesting pipeline apstrakcije)
-  - `src/Domain` (domen entiteti)
-  - `src/Infrastructure` (infrastrukturne implementacije pipeline-a)
-  - `src/Worker` (BackgroundService za ingestiju MQTT/RSSI poruka)
-  - `tests/UnitTests`
-  - `tests/IntegrationTests`
-- **frontend/**
-  - Angular 20 aplikacija sa standalone komponentama
-  - feature-based struktura (`dashboard`, `floor-map`, `devices`, `alerts`, `whitelist`, `reports`)
-  - `core` servisni sloj i `layouts`
+## Komponente
 
-## Dokumentacija
+- `backend/src/Api` — REST API, JWT autentikacija, Swagger i SignalR
+- `backend/src/Worker` — MQTT subscriber i ingestion pipeline
+- `backend/src/Application` — sessions, risk scoring, WLS lokalizacija, Kalman smoothing i reporting
+- `backend/src/Infrastructure` — PostgreSQL/EF Core, repositories i hashiranje identifikatora
+- `frontend` — Angular dashboard za profesora
 
-- `docs/planning/plan-realizacije.md`
-- `docs/planning/taskovi-realizacije.md`
-- `docs/spec/specifikacija-implementacije.md`
-- `docs/guidelines/best-practices-be-fe.md`
+## Najbrže pokretanje
 
-## AI build konfiguracija
+Ako je Docker instaliran:
 
-- Backend build konfiguracija: `backend/ai-build.config.json`
-- Frontend build konfiguracija: `frontend/ai-build.config.json`
-- GitHub Actions backend workflow: `.github/workflows/ai-build-backend.yml`
-- GitHub Actions frontend workflow: `.github/workflows/ai-build-frontend.yml`
-
-## Pokretanje
-
-### Backend
-
-```bash
-dotnet build /home/runner/work/Device-detection---ESP32/Device-detection---ESP32/backend/DeviceDetection.slnx
-dotnet test /home/runner/work/Device-detection---ESP32/Device-detection---ESP32/backend/DeviceDetection.slnx
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
 ```
 
-### Frontend
+Zatim otvoriti:
 
-```bash
-cd /home/runner/work/Device-detection---ESP32/Device-detection---ESP32/frontend
-npm test -- --watch=false --browsers=ChromeHeadless
+- aplikacija: http://localhost:4200
+- API/Swagger: http://localhost:7108/swagger
+- razvojni login: `admin` / `admin` (promeniti kroz `.env`)
+
+## Lokalno pokretanje bez Dockera
+
+Potrebni su PostgreSQL 16+, Mosquitto, .NET 9 i Node.js 22.
+
+```powershell
+cd backend
+dotnet run --project src/Api/Api.csproj
+```
+
+U drugom terminalu:
+
+```powershell
+cd backend
+dotnet run --project src/Worker/Worker.csproj
+```
+
+U trećem terminalu:
+
+```powershell
+cd frontend
+npm install
+npm start
+```
+
+Angular development server prosleđuje `/api` i `/hubs` na `https://localhost:7108`.
+
+## Verifikacija
+
+```powershell
+cd backend
+dotnet build DeviceDetection.slnx
+dotnet test DeviceDetection.slnx
+
+cd ../frontend
 npm run build
+npx tsc -p tsconfig.spec.json --noEmit
 ```
+
+## Konfiguracija i tajne
+
+Produkcione vrednosti ne treba čuvati u repozitorijumu. Koristiti environment varijable:
+
+- `ConnectionStrings__DefaultConnection`
+- `Jwt__SigningKey`
+- `Hashing__Pepper`
+- `DevelopmentUser__Username`
+- `DevelopmentUser__Password`
+- `Mqtt__Host`
+- `Monitoring__HubUrl`
+
+MQTT ugovor je opisan u [docs/spec/mqtt-contract.md](docs/spec/mqtt-contract.md).

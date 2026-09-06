@@ -26,7 +26,7 @@ public sealed class WhitelistController(IWhitelistService whitelistService) : Co
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remove(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await whitelistService.RemoveAsync(id, cancellationToken);
+        var removed = await whitelistService.RemoveAsync(id, cancellationToken: cancellationToken);
         return removed ? NoContent() : NotFound();
     }
 }

@@ -1,1 +1,13 @@
-<p>reports works!</p>
+<section class="page">
+  <header class="page-header"><div><p class="eyebrow">Analitika</p><h2>Izveštaj sesije</h2></div>
+    <button [disabled]="!report()" (click)="exportCsv()">Izvezi CSV</button></header>
+  <div class="panel toolbar"><label>Sesija<select [(ngModel)]="sessionId" (ngModelChange)="load()">
+    @for (session of sessions(); track session.id) { <option [value]="session.id">{{ session.name }} — {{ session.status }}</option> }
+  </select></label></div>
+  @if (report(); as data) { <div class="grid">
+    <article class="panel metric"><strong>{{data.observationCount}}</strong><span>merenja</span></article>
+    <article class="panel metric"><strong>{{data.distinctDeviceCount}}</strong><span>uređaja</span></article>
+    <article class="panel metric"><strong>{{data.alertCount}}</strong><span>alarma</span></article>
+    <article class="panel metric"><strong>{{data.generatedAt | date:'shortTime'}}</strong><span>generisano</span></article>
+  </div> } @else { <p class="panel muted">Izaberite sesiju.</p> }
+</section>

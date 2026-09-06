@@ -21,6 +21,13 @@ public sealed class LoggingRssiProcessingPipeline(
 {
     public async Task ProcessAsync(RssiIngressMessage message, CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrWhiteSpace(message.EventId) &&
+            await observationRepository.ExistsByExternalIdAsync(message.EventId, cancellationToken))
+        {
+            logger.LogDebug("Ignoring duplicate ingestion event {EventId}", SanitizeForLog(message.EventId));
+            return;
+        }
+
         var deviceHash = hashingService.Hash(message.DeviceIdentifier);
         var sensorId = SanitizeForLog(message.SensorId);
         var sessionId = SanitizeForLog(message.SessionId ?? "n/a");
@@ -43,14 +50,15 @@ public sealed class LoggingRssiProcessingPipeline(
             sessionId: message.SessionId,
             signalType: message.SignalType,
             rssi: message.Rssi,
-            capturedAt: message.CreatedAt);
+            capturedAt: message.CreatedAt,
+            externalId: message.EventId);
 
         await observationRepository.AddAsync(observation, cancellationToken);
 
         var isWhitelisted = !string.IsNullOrWhiteSpace(message.SessionId) &&
                             await whitelistRepository.IsWhitelistedAsync(message.SessionId, deviceHash, cancellationToken);
 
-        var riskScore = riskScoringService.Calculate(message.Rssi, isWhitelisted, unknownDevice);
+        var riskScore = riskScoringService.Calculate(message.Rssi, isWhitelisted, unknownDevice, message.SignalType);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -58,7 +66,8 @@ public sealed class LoggingRssiProcessingPipeline(
             new DeviceUpdatedEvent(deviceHash, message.SensorId, message.SessionId, message.Rssi, message.CreatedAt, riskScore),
             cancellationToken);
 
-        if (riskScore >= 70)
+        if (riskScore >= 70 &&
+            !await alertRepository.ExistsRecentAsync(device.Id, message.SessionId, TimeSpan.FromMinutes(2), cancellationToken))
         {
             var alert = Alert.Create(device.Id, message.SessionId, riskScore, "Risk threshold exceeded", DateTimeOffset.UtcNow);
             await alertRepository.AddAsync(alert, cancellationToken);

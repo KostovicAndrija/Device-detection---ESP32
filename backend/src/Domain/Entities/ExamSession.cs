@@ -36,12 +36,22 @@ public sealed class ExamSession
 
     public void Start(DateTimeOffset at)
     {
+        if (Status != "planned")
+        {
+            throw new InvalidOperationException($"A session in '{Status}' status cannot be started.");
+        }
+
         StartsAt = at;
         Status = "active";
     }
 
     public void Stop(DateTimeOffset at)
     {
+        if (Status != "active")
+        {
+            throw new InvalidOperationException($"A session in '{Status}' status cannot be stopped.");
+        }
+
         EndsAt = at;
         Status = "completed";
     }

@@ -1,8 +1,12 @@
 using Application.Abstractions.Persistence;
+using Application.Monitoring;
 
 namespace Application.Alerts;
 
-public sealed class AlertService(IAlertRepository repository, IAppUnitOfWork unitOfWork) : IAlertService
+public sealed class AlertService(
+    IAlertRepository repository,
+    IAppUnitOfWork unitOfWork,
+    IMonitoringEventPublisher monitoringEventPublisher) : IAlertService
 {
     public async Task<IReadOnlyList<AlertDto>> GetBySessionAsync(string sessionId, CancellationToken cancellationToken = default)
     {
@@ -18,8 +22,12 @@ public sealed class AlertService(IAlertRepository repository, IAppUnitOfWork uni
             return false;
         }
 
-        alert.Acknowledge(DateTimeOffset.UtcNow);
+        var acknowledgedAt = DateTimeOffset.UtcNow;
+        alert.Acknowledge(acknowledgedAt);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await monitoringEventPublisher.PublishAlertAcknowledgedAsync(
+            new AlertAcknowledgedEvent(alert.Id, acknowledgedAt),
+            cancellationToken);
         return true;
     }
 

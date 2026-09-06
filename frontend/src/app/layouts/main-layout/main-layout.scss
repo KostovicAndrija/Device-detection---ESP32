@@ -14,9 +14,16 @@
 }
 
 nav {
+  align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
+
+h1 { font-size: 1.15rem; margin: 0; }
+.status { color: #fca5a5; text-transform: capitalize; }
+.status.online { color: #86efac; }
+.link-button { background: transparent; color: #d1d5db; padding: 0; }
 
 a {
   color: #d1d5db;

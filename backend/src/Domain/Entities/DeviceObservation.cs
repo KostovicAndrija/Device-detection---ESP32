@@ -13,6 +13,7 @@ public sealed class DeviceObservation
     public string SignalType { get; private set; } = "wifi";
     public double Rssi { get; private set; }
     public DateTimeOffset CapturedAt { get; private set; }
+    public string? ExternalId { get; private set; }
 
     public static DeviceObservation Create(
         Guid deviceId,
@@ -20,7 +21,8 @@ public sealed class DeviceObservation
         string? sessionId,
         string signalType,
         double rssi,
-        DateTimeOffset capturedAt)
+        DateTimeOffset capturedAt,
+        string? externalId = null)
     {
         if (deviceId == Guid.Empty)
         {
@@ -49,7 +51,8 @@ public sealed class DeviceObservation
             SessionId = string.IsNullOrWhiteSpace(sessionId) ? null : sessionId.Trim(),
             SignalType = string.IsNullOrWhiteSpace(signalType) ? "wifi" : signalType.Trim().ToLowerInvariant(),
             Rssi = rssi,
-            CapturedAt = capturedAt
+            CapturedAt = capturedAt,
+            ExternalId = string.IsNullOrWhiteSpace(externalId) ? null : externalId.Trim()
         };
     }
 }

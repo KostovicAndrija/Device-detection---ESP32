@@ -1,0 +1,4 @@
+.room { aspect-ratio: 4 / 3; background: linear-gradient(#e2e8f055 1px, transparent 1px), linear-gradient(90deg,#e2e8f055 1px,transparent 1px); background-size: 10% 10%; max-height: 650px; position: relative; }
+.sensor { background: #172033; border-radius: .3rem; color: white; padding: .35rem; position: absolute; }
+.s1 { left: .5rem; top: .5rem; } .s2 { right: .5rem; top: .5rem; } .s3 { bottom: .5rem; left: 50%; }
+.device-dot { background: #dc2626; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 10px #0004; font-size: .65rem; height: 48px; padding: 0; position: absolute; transform: translate(-50%,-50%); width: 48px; }

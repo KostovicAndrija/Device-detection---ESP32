@@ -1,0 +1,4 @@
+.login-page { display: grid; min-height: 100vh; place-items: center; padding: 1rem; }
+.login-card { display: grid; gap: 1rem; max-width: 420px; width: 100%; }
+label { display: grid; gap: .4rem; }
+small { color: #64748b; }

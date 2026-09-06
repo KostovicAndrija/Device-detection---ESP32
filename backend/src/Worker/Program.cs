@@ -8,6 +8,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IMonitoringEventPublisher, WorkerSignalRMonitoringEventPublisher>();
+builder.Services.AddSingleton<WorkerAccessTokenProvider>();
 builder.Services.AddHostedService<MqttWorker>();
 
 var host = builder.Build();

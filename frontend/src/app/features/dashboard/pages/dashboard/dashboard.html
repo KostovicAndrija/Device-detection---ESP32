@@ -1,1 +1,27 @@
-<p>dashboard works!</p>
+<section class="page">
+  <header class="page-header"><div><p class="eyebrow">Kontrolni centar</p><h2>Ispitni dashboard</h2></div><button (click)="load()">Osveži</button></header>
+  @if (error()) { <p class="error">{{ error() }}</p> }
+  <div class="grid">
+    <article class="panel metric"><strong>{{ realtime.connectedDevices() }}</strong><span>uređaja uživo</span></article>
+    <article class="panel metric"><strong>{{ realtime.activeAlertCount() }}</strong><span>aktivnih alarma</span></article>
+    <article class="panel metric"><strong>{{ activeSession() ? 'Aktivna' : 'Nema' }}</strong><span>ispitna sesija</span></article>
+    <article class="panel metric"><strong>{{ realtime.connectionStatus() }}</strong><span>real-time veza</span></article>
+  </div>
+  <form class="panel toolbar" (ngSubmit)="create()">
+    <label>Naziv<input name="name" [(ngModel)]="name" required /></label>
+    <label>Prostorija<input name="room" [(ngModel)]="roomId" required /></label>
+    <label>Planirani početak<input name="start" type="datetime-local" [(ngModel)]="startsAt" required /></label>
+    <button type="submit">Nova sesija</button>
+  </form>
+  <article class="panel table-wrap">
+    <h3>Sesije</h3>
+    <table><thead><tr><th>Naziv</th><th>Prostorija</th><th>Početak</th><th>Status</th><th>Akcija</th></tr></thead>
+      <tbody>@for (session of sessions(); track session.id) {
+        <tr><td>{{ session.name }}</td><td>{{ session.roomId }}</td><td>{{ session.startsAt | date:'short' }}</td>
+          <td><span class="badge" [class.active]="session.status === 'active'">{{ session.status }}</span></td>
+          <td>@if (session.status === 'planned') { <button (click)="start(session)">Pokreni</button> }
+              @if (session.status === 'active') { <button class="danger" (click)="stop(session)">Zaustavi</button> }</td></tr>
+      } @empty { <tr><td colspan="5">Nema sesija.</td></tr> }</tbody>
+    </table>
+  </article>
+</section>

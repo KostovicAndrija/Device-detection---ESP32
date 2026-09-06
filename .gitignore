@@ -10,3 +10,9 @@ frontend/coverage/
 
 # IDE
 .vscode/
+.vs/
+**/.vs/
+
+# Local secrets
+.env
+*.user

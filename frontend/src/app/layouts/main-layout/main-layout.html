@@ -1,5 +1,10 @@
 <header class="topbar">
-  <h1>Device Detection Dashboard</h1>
+  <div>
+    <h1>Device Detection</h1>
+    <small class="status" [class.online]="realtime.connectionStatus() === 'connected'">
+      ● {{ realtime.connectionStatus() }}
+    </small>
+  </div>
   <nav>
     <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
     <a routerLink="/floor-map" routerLinkActive="active">Floor map</a>
@@ -7,6 +12,7 @@
     <a routerLink="/alerts" routerLinkActive="active">Alerts</a>
     <a routerLink="/whitelist" routerLinkActive="active">Whitelist</a>
     <a routerLink="/reports" routerLinkActive="active">Reports</a>
+    <button class="link-button" (click)="auth.logout()">Odjava</button>
   </nav>
 </header>
 

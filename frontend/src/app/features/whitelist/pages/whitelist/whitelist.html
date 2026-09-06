@@ -1,1 +1,17 @@
-<p>whitelist works!</p>
+<section class="page">
+  <header><p class="eyebrow">Dozvoljeni uređaji</p><h2>Whitelist</h2></header>
+  <div class="panel toolbar"><label>Sesija<select [(ngModel)]="sessionId" (ngModelChange)="load()">
+    @for (session of sessions(); track session.id) { <option [value]="session.id">{{ session.name }}</option> }
+  </select></label></div>
+  <form class="panel toolbar" (ngSubmit)="add()">
+    <label>Student<input name="student" [(ngModel)]="studentRef" required /></label>
+    <label>MAC / identifikator<input name="device" [(ngModel)]="deviceIdentifier" required /></label>
+    <label>Važi od<input name="from" type="datetime-local" [(ngModel)]="validFrom" required /></label>
+    <label>Važi do<input name="to" type="datetime-local" [(ngModel)]="validTo" /></label>
+    <button type="submit" [disabled]="!sessionId">Dodaj</button>
+  </form>
+  <div class="panel table-wrap"><table><thead><tr><th>Student</th><th>Hash uređaja</th><th>Važi od</th><th></th></tr></thead>
+    <tbody>@for (entry of entries(); track entry.id) { <tr><td>{{entry.studentRef}}</td><td>{{entry.deviceHash.slice(0,14)}}…</td>
+      <td>{{entry.validFrom | date:'short'}}</td><td><button class="danger" (click)="remove(entry)">Ukloni</button></td></tr>
+    } @empty { <tr><td colspan="4">Whitelist je prazna.</td></tr> }</tbody></table></div>
+</section>

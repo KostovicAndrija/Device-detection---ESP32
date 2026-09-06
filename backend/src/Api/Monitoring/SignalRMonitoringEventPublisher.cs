@@ -11,4 +11,10 @@ public sealed class SignalRMonitoringEventPublisher(IHubContext<MonitoringHub> h
 
     public Task PublishAlertCreatedAsync(AlertCreatedEvent payload, CancellationToken cancellationToken = default)
         => hubContext.Clients.All.SendAsync("alertCreated", payload, cancellationToken);
+
+    public Task PublishAlertAcknowledgedAsync(AlertAcknowledgedEvent payload, CancellationToken cancellationToken = default)
+        => hubContext.Clients.All.SendAsync("alertAcknowledged", payload, cancellationToken);
+
+    public Task PublishSessionStateChangedAsync(SessionStateChangedEvent payload, CancellationToken cancellationToken = default)
+        => hubContext.Clients.All.SendAsync("sessionStateChanged", payload, cancellationToken);
 }

@@ -10,6 +10,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ExamSession> ExamSessions => Set<ExamSession>();
     public DbSet<Alert> Alerts => Set<Alert>();
     public DbSet<WhitelistEntry> WhitelistEntries => Set<WhitelistEntry>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,8 +38,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.SignalType).HasColumnName("signal_type").HasMaxLength(32).IsRequired();
             entity.Property(x => x.Rssi).HasColumnName("rssi").IsRequired();
             entity.Property(x => x.CapturedAt).HasColumnName("captured_at").IsRequired();
+            entity.Property(x => x.ExternalId).HasColumnName("external_id").HasMaxLength(128);
             entity.HasIndex(x => x.CapturedAt);
             entity.HasIndex(x => new { x.SessionId, x.CapturedAt });
+            entity.HasIndex(x => x.ExternalId).IsUnique();
         });
 
         modelBuilder.Entity<ExamSession>(entity =>
@@ -73,6 +78,40 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.ValidFrom).HasColumnName("valid_from").IsRequired();
             entity.Property(x => x.ValidTo).HasColumnName("valid_to");
             entity.HasIndex(x => new { x.SessionId, x.DeviceHash });
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("audit_logs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Actor).HasColumnName("actor").HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Action).HasColumnName("action").HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Resource).HasColumnName("resource").HasMaxLength(512).IsRequired();
+            entity.Property(x => x.StatusCode).HasColumnName("status_code").IsRequired();
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+            entity.HasIndex(x => x.CreatedAt);
+        });
+
+        modelBuilder.Entity<AppUser>(entity =>
+        {
+            entity.ToTable("users");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Username).HasColumnName("username").HasMaxLength(128).IsRequired();
+            entity.Property(x => x.PasswordHash).HasColumnName("password_hash").HasMaxLength(512).IsRequired();
+            entity.Property(x => x.Role).HasColumnName("role").HasMaxLength(32).IsRequired();
+            entity.HasIndex(x => x.Username).IsUnique();
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("refresh_tokens");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(x => x.TokenHash).HasColumnName("token_hash").HasMaxLength(128).IsRequired();
+            entity.Property(x => x.ExpiresAt).HasColumnName("expires_at").IsRequired();
+            entity.Property(x => x.RevokedAt).HasColumnName("revoked_at");
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.UserId, x.ExpiresAt });
         });
     }
 }

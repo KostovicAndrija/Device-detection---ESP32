@@ -19,9 +19,15 @@ public sealed class WhitelistRepository(AppDbContext dbContext) : IWhitelistRepo
         => dbContext.WhitelistEntries.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<bool> IsWhitelistedAsync(string sessionId, string deviceHash, CancellationToken cancellationToken = default)
-        => dbContext.WhitelistEntries.AnyAsync(
-            x => x.SessionId == sessionId && x.DeviceHash == deviceHash && (x.ValidTo == null || x.ValidTo >= DateTimeOffset.UtcNow),
+    {
+        var now = DateTimeOffset.UtcNow;
+        return dbContext.WhitelistEntries.AnyAsync(
+            x => x.SessionId == sessionId &&
+                 x.DeviceHash == deviceHash &&
+                 x.ValidFrom <= now &&
+                 (x.ValidTo == null || x.ValidTo >= now),
             cancellationToken);
+    }
 
     public void Remove(WhitelistEntry entry)
         => dbContext.WhitelistEntries.Remove(entry);

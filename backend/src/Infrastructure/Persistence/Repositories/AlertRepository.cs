@@ -17,4 +17,16 @@ public sealed class AlertRepository(AppDbContext dbContext) : IAlertRepository
 
     public Task<Alert?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => dbContext.Alerts.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task<bool> ExistsRecentAsync(
+        Guid deviceId,
+        string? sessionId,
+        TimeSpan window,
+        CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.Subtract(window);
+        return dbContext.Alerts.AnyAsync(
+            x => x.DeviceId == deviceId && x.SessionId == sessionId && x.CreatedAt >= cutoff,
+            cancellationToken);
+    }
 }

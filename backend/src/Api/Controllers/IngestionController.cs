@@ -19,7 +19,8 @@ public sealed class IngestionController(IRssiIngestionService ingestionService) 
             request.SessionId,
             request.SignalType,
             request.Rssi,
-            request.CapturedAt ?? DateTimeOffset.UtcNow);
+            request.CapturedAt ?? DateTimeOffset.UtcNow,
+            request.EventId);
 
         await ingestionService.IngestAsync(message, cancellationToken);
         return Accepted();
@@ -28,6 +29,11 @@ public sealed class IngestionController(IRssiIngestionService ingestionService) 
     [HttpPost("batch")]
     public async Task<IActionResult> IngestBatch([FromBody] IReadOnlyList<IngestObservationRequest> batch, CancellationToken cancellationToken)
     {
+        if (batch.Count is 0 or > 500)
+        {
+            return BadRequest(new ProblemDetails { Title = "Batch must contain between 1 and 500 observations." });
+        }
+
         foreach (var request in batch)
         {
             var message = new RssiIngressMessage(
@@ -36,7 +42,8 @@ public sealed class IngestionController(IRssiIngestionService ingestionService) 
                 request.SessionId,
                 request.SignalType,
                 request.Rssi,
-                request.CapturedAt ?? DateTimeOffset.UtcNow);
+                request.CapturedAt ?? DateTimeOffset.UtcNow,
+                request.EventId);
 
             await ingestionService.IngestAsync(message, cancellationToken);
         }
@@ -48,7 +55,8 @@ public sealed class IngestionController(IRssiIngestionService ingestionService) 
         [Required] string DeviceIdentifier,
         [Required] string SensorId,
         string? SessionId,
-        [Required] string SignalType,
+        [Required, RegularExpression("^(wifi|ble|bluetooth|bluetooth_pairing)$")] string SignalType,
         [Range(-120, 0)] double Rssi,
-        DateTimeOffset? CapturedAt);
+        DateTimeOffset? CapturedAt,
+        [StringLength(128)] string? EventId);
 }

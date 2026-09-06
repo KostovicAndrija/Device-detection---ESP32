@@ -23,4 +23,15 @@ public sealed class RiskScoringServiceTests
 
         Assert.InRange(score, 0, 70);
     }
+
+    [Fact]
+    public void Calculate_RaisesScore_ForBluetoothPairingAttempt()
+    {
+        var service = new RiskScoringService();
+
+        var regular = service.Calculate(-70, whitelisted: false, unknownDevice: false, "bluetooth");
+        var pairing = service.Calculate(-70, whitelisted: false, unknownDevice: false, "bluetooth_pairing");
+
+        Assert.True(pairing > regular);
+    }
 }

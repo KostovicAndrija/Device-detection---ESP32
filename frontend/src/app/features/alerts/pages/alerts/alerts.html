@@ -1,1 +1,12 @@
-<p>alerts works!</p>
+<section class="page">
+  <header class="page-header"><div><p class="eyebrow">Bezbednosni događaji</p><h2>Alarmi</h2></div></header>
+  <div class="panel toolbar"><label>Sesija<select [(ngModel)]="sessionId" (ngModelChange)="load()">
+    @for (session of sessions(); track session.id) { <option [value]="session.id">{{ session.name }} — {{ session.status }}</option> }
+  </select></label><button (click)="load()">Osveži</button></div>
+  <div class="panel table-wrap"><table><thead><tr><th>Rizik</th><th>Razlog</th><th>Uređaj</th><th>Vreme</th><th>Status</th></tr></thead>
+    <tbody>@for (alert of alerts(); track alert.id) {
+      <tr><td><span class="badge" [class]="severity(alert.riskScore)">{{ alert.riskScore }}</span></td><td>{{ alert.reason }}</td>
+        <td>{{ alert.deviceId.slice(0, 12) }}…</td><td>{{ alert.createdAt | date:'short' }}</td><td>
+          @if (alert.acknowledgedAt) { <span class="badge active">Obrađen</span> } @else { <button (click)="acknowledge(alert)">Potvrdi</button> }</td></tr>
+    } @empty { <tr><td colspan="5">Nema alarma za izabranu sesiju.</td></tr> }</tbody></table></div>
+</section>

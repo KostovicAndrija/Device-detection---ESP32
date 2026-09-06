@@ -34,3 +34,12 @@ jobs:
 
       - name: Build
         run: npm run build -- --configuration production
+
+      - name: Type-check tests
+        run: npx tsc -p tsconfig.spec.json --noEmit
+
+      - name: Upload frontend
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend
+          path: frontend/dist/frontend/browser

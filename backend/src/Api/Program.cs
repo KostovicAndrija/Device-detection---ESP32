@@ -4,9 +4,12 @@ using Api.Hubs;
 using Api.Monitoring;
 using Application;
 using Application.Monitoring;
+using Application.Localization;
 using Infrastructure;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
 
@@ -14,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -67,12 +71,17 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddApplication();
+builder.Services.Configure<LocalizationOptions>(
+    builder.Configuration.GetSection(LocalizationOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IMonitoringEventPublisher, SignalRMonitoringEventPublisher>();
+builder.Services.AddHostedService<ObservationRetentionWorker>();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<DevelopmentUserOptions>(
     builder.Configuration.GetSection(DevelopmentUserOptions.SectionName));
-builder.Services.AddSingleton<TokenService>();
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AuthBootstrapper>();
+builder.Services.AddSingleton<IPasswordHasher<Domain.Entities.AppUser>, PasswordHasher<Domain.Entities.AppUser>>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 builder.Services
@@ -113,7 +122,8 @@ app.UseExceptionHandler();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
+    await scope.ServiceProvider.GetRequiredService<AuthBootstrapper>().SeedAsync();
 }
 
 if (app.Environment.IsDevelopment())
@@ -132,9 +142,14 @@ app.UseHttpsRedirection();
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
 app.MapHub<MonitoringHub>("/hubs/monitoring");
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/health/ready", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+    await dbContext.Database.CanConnectAsync(cancellationToken)
+        ? Results.Ok(new { status = "ready", database = "connected" })
+        : Results.Problem("Database is unavailable.", statusCode: StatusCodes.Status503ServiceUnavailable));
 
 app.Run();

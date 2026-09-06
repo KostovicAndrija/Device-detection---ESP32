@@ -14,4 +14,7 @@ public sealed class ObservationRepository(AppDbContext dbContext) : IObservation
             .Where(x => x.SessionId == sessionId)
             .OrderByDescending(x => x.CapturedAt)
             .ToListAsync(cancellationToken);
+
+    public Task<bool> ExistsByExternalIdAsync(string externalId, CancellationToken cancellationToken = default)
+        => dbContext.DeviceObservations.AnyAsync(x => x.ExternalId == externalId, cancellationToken);
 }

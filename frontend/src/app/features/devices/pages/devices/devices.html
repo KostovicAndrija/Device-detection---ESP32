@@ -1,1 +1,13 @@
-<p>devices works!</p>
+<section class="page">
+  <header class="page-header"><div><p class="eyebrow">Monitoring</p><h2>Aktivni uređaji</h2></div></header>
+  <div class="panel toolbar">
+    <label>Pretraga<input [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Hash ili tip" /></label>
+    <label>Prozor (min)<input type="number" min="1" [(ngModel)]="windowMinutes" /></label>
+    <button (click)="load()">Osveži</button>
+  </div>
+  <div class="panel table-wrap"><table><thead><tr><th>Hash</th><th>Tip</th><th>Prvi put</th><th>Poslednji put</th></tr></thead>
+    <tbody>@for (device of filtered(); track device.id) {
+      <tr><td title="{{device.hashId}}">{{ device.hashId.slice(0, 14) }}…</td><td><span class="badge">{{ device.type }}</span></td>
+        <td>{{ device.firstSeenAt | date:'short' }}</td><td>{{ device.lastSeenAt | date:'mediumTime' }}</td></tr>
+    } @empty { <tr><td colspan="4">Nema aktivnih uređaja.</td></tr> }</tbody></table></div>
+</section>
