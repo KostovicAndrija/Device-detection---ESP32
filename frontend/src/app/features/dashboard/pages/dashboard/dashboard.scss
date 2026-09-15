@@ -1,0 +1,14 @@
+:host { display: block; }
+.section-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: .8rem; }
+.section-heading h3, .room-title h3 { margin: 0; }
+.section-heading > p, .classroom-card > p, .table-hint { color: #64748b; font-size: .85rem; }
+.classroom-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.classroom-card { cursor: pointer; display: flex; flex-direction: column; gap: .7rem; transition: transform .18s ease, box-shadow .18s ease; }
+.classroom-card:hover, .classroom-card:focus-visible { box-shadow: 0 14px 35px #0f172a1c; outline: none; transform: translateY(-2px); }
+.room-title, .room-actions { align-items: center; display: flex; justify-content: space-between; gap: 1rem; }
+.room-title > strong { align-items: center; background: #eff6ff; border-radius: 50%; color: #2563eb; display: flex; height: 42px; justify-content: center; width: 42px; }
+.room-code { color: #64748b; font-size: .67rem; font-weight: 800; letter-spacing: .12em; }
+.clickable-row { cursor: pointer; }
+.clickable-row:hover { background: #f8fafc; }
+.table-hint { margin-top: -.35rem; }
+@media (max-width: 700px) { .section-heading { align-items: start; flex-direction: column; } }

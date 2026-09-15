@@ -10,6 +10,7 @@ public sealed class MqttWorker(
     IServiceScopeFactory serviceScopeFactory,
     IConfiguration configuration) : BackgroundService
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private readonly string _host = configuration.GetValue<string>("Mqtt:Host") ?? "localhost";
     private readonly int _port = configuration.GetValue<int?>("Mqtt:Port") ?? 1883;
     private readonly string _topic = configuration.GetValue<string>("Mqtt:Topic") ?? "sensors/+/rssi";
@@ -25,7 +26,9 @@ public sealed class MqttWorker(
             {
                 var payload = messageEvent.ApplicationMessage.PayloadSegment.Array is null
                     ? null
-                    : JsonSerializer.Deserialize<WorkerIngressPayload>(messageEvent.ApplicationMessage.PayloadSegment);
+                    : JsonSerializer.Deserialize<WorkerIngressPayload>(
+                        messageEvent.ApplicationMessage.PayloadSegment,
+                        SerializerOptions);
 
                 if (payload is null)
                 {

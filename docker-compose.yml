@@ -65,6 +65,25 @@ services:
     ports:
       - "4200:80"
 
+  simulator:
+    profiles: ["tools"]
+    build:
+      context: ./simulator
+    environment:
+      MQTT_URL: mqtt://mqtt:1883
+      API_URL: http://api:8080
+      APP_USERNAME: ${APP_USERNAME:-admin}
+      APP_PASSWORD: ${APP_PASSWORD:-admin}
+      ASSISTANT_USERNAME: ${ASSISTANT_USERNAME:-demo-asistent}
+      ASSISTANT_PASSWORD: ${ASSISTANT_PASSWORD:-AsistentDemo2026!}
+    depends_on:
+      mqtt:
+        condition: service_started
+      api:
+        condition: service_started
+      worker:
+        condition: service_started
+
 volumes:
   postgres-data:
   mqtt-data:

@@ -13,6 +13,7 @@ export const routes: Routes = [
     component: MainLayout,
     canActivateChild: [authGuard],
     children: [
+      { path: 'my-devices', loadComponent: () => import('./features/staff/staff').then(m => m.Staff) },
       {
         path: '',
         pathMatch: 'full',

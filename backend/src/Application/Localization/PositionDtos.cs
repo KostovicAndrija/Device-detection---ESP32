@@ -6,18 +6,14 @@ public sealed record DevicePositionDto(
     double Y,
     double Confidence,
     DateTimeOffset CapturedAt,
-    int SensorCount);
+    int SensorCount,
+    bool IsWhitelisted);
 
 public sealed class LocalizationOptions
 {
     public const string SectionName = "Localization";
     public int WindowSeconds { get; set; } = 15;
-    public List<SensorPositionOptions> Sensors { get; set; } =
-    [
-        new() { Id = "S1", X = 0, Y = 0 },
-        new() { Id = "S2", X = 8, Y = 0 },
-        new() { Id = "S3", X = 4, Y = 6 }
-    ];
+    public List<SensorPositionOptions> Sensors { get; set; } = [];
 }
 
 public sealed class SensorPositionOptions

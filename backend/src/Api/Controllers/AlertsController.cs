@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Professor")]
+[Authorize(Roles = "Professor,Assistant")]
 [Route("api/alerts")]
 public sealed class AlertsController(IAlertService alertService) : ControllerBase
 {

@@ -74,6 +74,9 @@ export class Realtime {
   }
 
   async disconnect(): Promise<void> {
+    this.devices.set([]);
+    this.alerts.set([]);
+    this.selectedSession.set(null);
     await this.connection?.stop();
     this.connectionStatus.set('disconnected');
   }

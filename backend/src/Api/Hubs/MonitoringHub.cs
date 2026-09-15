@@ -1,12 +1,23 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Api.Monitoring;
+using Infrastructure.Persistence;
+using System.Security.Claims;
 
 namespace Api.Hubs;
 
 [Authorize]
-public sealed class MonitoringHub : Hub
+public sealed class MonitoringHub(AppDbContext db) : Hub
 {
-    public Task PublishFromWorker(string eventName, object payload)
+    public override async Task OnConnectedAsync()
+    {
+        if (Context.User?.IsInRole("Professor") == true) await Groups.AddToGroupAsync(Context.ConnectionId, "professors");
+        else if (Context.User?.IsInRole("Assistant") == true && Guid.TryParse(Context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user:{id}");
+        await base.OnConnectedAsync();
+    }
+
+    public async Task PublishFromWorker(string eventName, object payload)
     {
         if (!Context.User?.IsInRole("Worker") ?? true)
         {
@@ -25,6 +36,6 @@ public sealed class MonitoringHub : Hub
             throw new HubException("Unsupported monitoring event.");
         }
 
-        return Clients.All.SendAsync(eventName, payload);
+        await Clients.Groups(await MonitoringAudience.Groups(db, payload)).SendAsync(eventName, payload);
     }
 }

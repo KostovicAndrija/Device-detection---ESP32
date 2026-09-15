@@ -1,14 +1,25 @@
-<section class="page">
-  <header class="page-header"><div><p class="eyebrow">Lokalizacija</p><h2>Mapa prostorije</h2></div>
-    <div class="toolbar"><select [(ngModel)]="sessionId" (ngModelChange)="load()">@for (s of sessions(); track s.id) {<option [value]="s.id">{{s.name}}</option>}</select><button (click)="load()">Osveži</button></div></header>
-  <div class="panel room">
-    <span class="sensor s1">S1</span><span class="sensor s2">S2</span><span class="sensor s3">S3</span>
-    @for (position of positions(); track position.deviceId) {
-      <button class="device-dot" [style.left]="left(position.x)" [style.top]="top(position.y)"
-        title="Uređaj {{position.deviceId}} · confidence {{position.confidence}}">
-        {{position.confidence * 100 | number:'1.0-0'}}%
-      </button>
-    }
+<section class="page floor-page">
+  @if (error()) { <p role="alert">{{error()}}</p> }
+  <header class="page-header">
+    <div><p class="eyebrow">Lokalizacija uživo</p><h2>{{ selectedClassroom().name }}</h2><p class="subtitle">Uređaji blede kada prestanu da šalju signal i ponovo se pojavljuju pri sledećoj aktivnosti.</p></div>
+    <div class="toolbar map-toolbar">
+      <label>Učionica<select [(ngModel)]="roomId" (ngModelChange)="selectRoom()">@for (room of classrooms; track room.id) { <option [value]="room.id">{{ room.name }}</option> }</select></label>
+      <label>Istorija sesija<select [(ngModel)]="sessionId" (ngModelChange)="selectSession()"><option value="">Bez izabrane sesije</option>@for (session of sessions(); track session.id) { @if (session.roomId === roomId) { <option [value]="session.id">{{ session.name }} · {{ session.status }}</option> } }</select></label>
+      @if (selectedSession()?.status === 'active') { <button class="danger" (click)="stopReading()">Zaustavi očitavanje</button> } @else { <button (click)="startReading()" [disabled]="loading()">{{ loading() ? 'Pokrećem…' : 'Počni očitavanje' }}</button> }
+      <button (click)="load()" [disabled]="loading()">{{ loading() ? 'Osvežavam…' : 'Osveži' }}</button>
+    </div>
+  </header>
+  <div class="status-strip"><span class="status-pill"><i class="status-dot live-dot"></i>{{ activeCount() }} aktivno</span><span class="status-pill"><i class="status-dot fading-dot"></i>{{ fadingCount() }} nestaje</span><span class="status-pill subtle">Automatsko osvežavanje · 2 s</span></div>
+  <div class="room-shell">
+    <div class="room-label">{{ selectedClassroom().name | uppercase }} · {{ visiblePositions().length }} UREĐAJA U PROSTORU</div>
+    <div class="room">
+      <div class="blackboard"><span>Tabla</span></div><div class="teacher-desk"><span>Katedra</span></div><div class="door"><span>Izlaz</span></div><div class="windows" aria-label="Prozori"><i></i><i></i><i></i></div>
+      @if (selectedClassroom().layout === 'aisle-2-3') { <div class="center-aisle"><span>PROLAZ</span></div> }
+      @for (desk of desks(); track desk.id) { <div class="student-desk" [style.left.%]="desk.left" [style.top.%]="desk.top"><i class="computer"></i><span>{{ desk.id }}</span><i class="chair chair-center"></i></div> }
+      <div class="sensor sensor-s1"><i></i><span>S1</span><small>0, 0</small></div><div class="sensor sensor-s2"><i></i><span>S2</span><small>8, 0</small></div><div class="sensor sensor-s3"><i></i><span>S3</span><small>4, 6</small></div>
+      @for (position of visiblePositions(); track position.deviceId) { <button class="device-marker" [class.live]="presence(position) === 'live'" [class.fading]="presence(position) === 'fading'" [class.whitelisted]="position.isWhitelisted" [style.left]="left(position.x)" [style.top]="top(position.y)" [style.opacity]="opacity(position)" [attr.aria-label]="'Uređaj ' + position.deviceId" title="{{ position.isWhitelisted ? 'Whitelist uređaj' : 'Nepoznat uređaj' }} · pouzdanost {{ position.confidence * 100 | number:'1.0-0' }}% · {{ position.sensorCount }} senzora"><span class="device-pulse"></span><span class="device-icon">{{ shortId(position.deviceId) }}</span><small>{{ position.isWhitelisted ? 'DOZVOLJEN' : (position.confidence * 100 | number:'1.0-0') + '%' }}</small></button> }
+      @if (!sessionId) { <div class="empty-room">Učionica je spremna. Klikni „Počni očitavanje“.</div> } @else if (positions().length === 0 && !loading()) { <div class="empty-room">Čekam prva očitavanja senzora…</div> }
+    </div>
   </div>
-  <p class="muted">S1/S2/S3 su senzori. Tačke prikazuju procenjenu poziciju i confidence.</p>
+  <div class="map-legend"><span><i class="legend-device"></i> Nepoznat uređaj</span><span><i class="legend-allowed"></i> Whitelist uređaj</span><span><i class="legend-sensor"></i> ESP32 senzor</span><span><i class="legend-desk"></i> Računar</span><span class="last-update">@if (lastRefresh()) { Poslednje osvežavanje: {{ lastRefresh()!.toLocaleTimeString() }} }</span></div>
 </section>

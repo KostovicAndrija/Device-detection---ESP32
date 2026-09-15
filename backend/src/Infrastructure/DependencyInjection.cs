@@ -25,6 +25,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IAppUnitOfWork, AppUnitOfWork>();
+        services.AddScoped<ICurrentUser, AnonymousCurrentUser>();
+        services.AddScoped<ISessionAccess, SessionAccess>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IObservationRepository, ObservationRepository>();
         services.AddScoped<IAlertRepository, AlertRepository>();

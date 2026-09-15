@@ -9,6 +9,11 @@ public sealed class DeviceRepository(AppDbContext dbContext) : IDeviceRepository
     public Task<Device?> GetByHashAsync(string hashId, CancellationToken cancellationToken = default)
         => dbContext.Devices.SingleOrDefaultAsync(x => x.HashId == hashId, cancellationToken);
 
+    public async Task<IReadOnlyList<Device>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+        => await dbContext.Devices.Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
+
     public Task AddAsync(Device device, CancellationToken cancellationToken = default)
         => dbContext.Devices.AddAsync(device, cancellationToken).AsTask();
 

@@ -2,9 +2,11 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Api, ExamSession, WhitelistEntry } from '../../../../core/services/api';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({ selector: 'app-whitelist', imports: [FormsModule, DatePipe], templateUrl: './whitelist.html', styleUrl: './whitelist.scss' })
 export class Whitelist implements OnInit {
+  readonly auth = inject(AuthService);
   private readonly api = inject(Api);
   readonly sessions = signal<ExamSession[]>([]);
   readonly entries = signal<WhitelistEntry[]>([]);

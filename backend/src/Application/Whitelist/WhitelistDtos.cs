@@ -13,4 +13,5 @@ public sealed record WhitelistEntryDto(
     string StudentRef,
     string DeviceHash,
     DateTimeOffset ValidFrom,
-    DateTimeOffset? ValidTo);
+    DateTimeOffset? ValidTo,
+    Guid? StaffDeviceId = null);

@@ -80,6 +80,11 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("role");
 
+                    b.Property<int>("StaffDeviceRevision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("staff_device_revision");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -237,6 +242,14 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<DateTimeOffset?>("RegistrationExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("registration_expires_at");
+
                     b.Property<string>("RoomId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -254,6 +267,8 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnName("status");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerUserId");
 
                     b.ToTable("exam_sessions", (string)null);
                 });
@@ -292,6 +307,43 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.StaffDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeviceHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("RegistrationSessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceHash")
+                        .IsUnique();
+
+                    b.HasIndex("RegistrationSessionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("staff_devices", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.WhitelistEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -310,6 +362,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("session_id");
 
+                    b.Property<Guid?>("StaffDeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_device_id");
+
                     b.Property<string>("StudentRef")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -326,9 +382,42 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("StaffDeviceId");
+
                     b.HasIndex("SessionId", "DeviceHash");
 
                     b.ToTable("whitelist_entries", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.ExamSession", b =>
+                {
+                    b.HasOne("Domain.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Domain.Entities.StaffDevice", b =>
+                {
+                    b.HasOne("Domain.Entities.ExamSession", null)
+                        .WithMany()
+                        .HasForeignKey("RegistrationSessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.WhitelistEntry", b =>
+                {
+                    b.HasOne("Domain.Entities.StaffDevice", null)
+                        .WithMany()
+                        .HasForeignKey("StaffDeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618
         }

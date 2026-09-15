@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Professor")]
+[Authorize(Roles = "Professor,Assistant")]
 [Route("api/sessions")]
 public sealed class SessionsController(
     IExamSessionService sessionService,
@@ -35,6 +35,22 @@ public sealed class SessionsController(
     {
         var created = await sessionService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetAll), new { id = created.Id }, created);
+    }
+
+    [HttpPost("start-for-room")]
+    public async Task<IActionResult> StartForRoom(
+        [FromBody] StartRoomSessionRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var session = await sessionService.StartForRoomAsync(request, cancellationToken);
+            return Ok(session);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new ProblemDetails { Title = ex.Message, Status = StatusCodes.Status409Conflict });
+        }
     }
 
     [HttpPost("{id:guid}/start")]

@@ -13,6 +13,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<StaffDevice> StaffDevices => Set<StaffDevice>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,6 +54,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.StartsAt).HasColumnName("starts_at").IsRequired();
             entity.Property(x => x.EndsAt).HasColumnName("ends_at");
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(32).IsRequired();
+            entity.Property(x => x.OwnerUserId).HasColumnName("owner_user_id");
+            entity.Property(x => x.RegistrationExpiresAt).HasColumnName("registration_expires_at");
+            entity.HasOne<AppUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Alert>(entity =>
@@ -77,6 +81,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.DeviceHash).HasColumnName("device_hash").HasMaxLength(256).IsRequired();
             entity.Property(x => x.ValidFrom).HasColumnName("valid_from").IsRequired();
             entity.Property(x => x.ValidTo).HasColumnName("valid_to");
+            entity.Property(x => x.StaffDeviceId).HasColumnName("staff_device_id");
+            entity.HasOne<StaffDevice>().WithMany().HasForeignKey(x => x.StaffDeviceId).OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(x => new { x.SessionId, x.DeviceHash });
         });
 
@@ -100,6 +106,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.PasswordHash).HasColumnName("password_hash").HasMaxLength(512).IsRequired();
             entity.Property(x => x.Role).HasColumnName("role").HasMaxLength(32).IsRequired();
             entity.HasIndex(x => x.Username).IsUnique();
+            entity.Property(x => x.StaffDeviceRevision).HasColumnName("staff_device_revision").IsConcurrencyToken();
+        });
+
+        modelBuilder.Entity<StaffDevice>(entity =>
+        {
+            entity.ToTable("staff_devices");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Label).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.DeviceHash).HasMaxLength(256).IsRequired();
+            entity.HasIndex(x => x.DeviceHash).IsUnique();
+            entity.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ExamSession>().WithMany().HasForeignKey(x => x.RegistrationSessionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>

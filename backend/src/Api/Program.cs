@@ -53,7 +53,7 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<SessionAuthorizationFilter>());
 builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
@@ -74,6 +74,8 @@ builder.Services.AddApplication();
 builder.Services.Configure<LocalizationOptions>(
     builder.Configuration.GetSection(LocalizationOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<Application.Abstractions.Security.ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<IMonitoringEventPublisher, SignalRMonitoringEventPublisher>();
 builder.Services.AddHostedService<ObservationRetentionWorker>();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));

@@ -1,0 +1,14 @@
+{
+  "name": "device-detection-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.mjs",
+    "check": "node --check src/index.mjs && node --check src/role-demo.mjs",
+    "test": "node --test src/role-demo.test.mjs"
+  },
+  "dependencies": {
+    "mqtt": "5.14.1"
+  }
+}

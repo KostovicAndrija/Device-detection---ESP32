@@ -5,6 +5,8 @@ namespace Application.Localization;
 
 public sealed class PositionQueryService(
     IObservationRepository observationRepository,
+    IDeviceRepository deviceRepository,
+    IWhitelistRepository whitelistRepository,
     ILocalizationService localizationService,
     IPositionSmoother positionSmoother,
     IOptions<LocalizationOptions> options) : IPositionQueryService
@@ -23,6 +25,18 @@ public sealed class PositionQueryService(
 
         var sensorMap = _options.Sensors.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
         var cutoff = observations.Max(x => x.CapturedAt).AddSeconds(-Math.Max(1, _options.WindowSeconds));
+        var deviceIds = observations.Select(x => x.DeviceId).Distinct().ToArray();
+        var devices = await deviceRepository.GetByIdsAsync(deviceIds, cancellationToken);
+        var entries = await whitelistRepository.GetBySessionAsync(sessionId, cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        var allowedHashes = entries
+            .Where(x => x.ValidFrom <= now && (x.ValidTo is null || x.ValidTo >= now))
+            .Select(x => x.DeviceHash)
+            .ToHashSet(StringComparer.Ordinal);
+        var allowedDeviceIds = devices
+            .Where(x => allowedHashes.Contains(x.HashId))
+            .Select(x => x.Id)
+            .ToHashSet();
 
         return observations
             .Where(x => x.CapturedAt >= cutoff && sensorMap.ContainsKey(x.SensorId))
@@ -49,7 +63,8 @@ public sealed class PositionQueryService(
                     estimate.Y,
                     estimate.Confidence,
                     latest.Max(x => x.CapturedAt),
-                    readings.Count);
+                    readings.Count,
+                    allowedDeviceIds.Contains(group.Key));
             })
             .Where(x => x is not null)
             .Cast<DevicePositionDto>()

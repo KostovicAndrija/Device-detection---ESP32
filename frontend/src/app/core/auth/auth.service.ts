@@ -16,6 +16,14 @@ export class AuthService {
   private readonly tokenKey = 'device-detection-auth';
 
   readonly session = signal<AuthResponse | null>(this.readSession());
+  readonly isProfessor = computed(() => {
+    try {
+      const part = this.session()?.accessToken.split('.')[1];
+      if (!part) return false;
+      const data = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+      return (data.role ?? data['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']) === 'Professor';
+    } catch { return false; }
+  });
   readonly authenticated = computed(() => {
     const value = this.session();
     return !!value && new Date(value.expiresAt).getTime() > Date.now();

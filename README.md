@@ -63,6 +63,30 @@ npm run build
 npx tsc -p tsconfig.spec.json --noEmit
 ```
 
+## Simulacija ESP32 senzora
+
+Kompletan MQTT end-to-end test bez fizičkih senzora:
+
+```powershell
+docker compose --profile tools run --rm --build simulator suite
+```
+
+Simulator automatski kreira i pokreće test sesiju, generiše normalne, rizične,
+whitelist, lokalizacione i nevalidne događaje i proverava alarme, aktivne uređaje
+i poziciju dobijenu sa tri senzora. Pojedinačni scenariji i load-test opcije su
+opisani u [simulator/README.md](simulator/README.md).
+
+Detaljno objašnjenje arhitekture, toka MQTT poruke, lokalizacije, animacije mape
+i svih načina simulacije nalazi se u
+[docs/simulacija-senzora-i-tok-sistema.md](docs/simulacija-senzora-i-tok-sistema.md).
+
+Kontinuirani demo za mapu učionice, sa uređajima koji se pojavljuju, kreću,
+postepeno nestaju i ponovo aktiviraju:
+
+```powershell
+docker compose --profile tools run --rm --build simulator demo
+```
+
 ## Konfiguracija i tajne
 
 Produkcione vrednosti ne treba čuvati u repozitorijumu. Koristiti environment varijable:
@@ -76,3 +100,9 @@ Produkcione vrednosti ne treba čuvati u repozitorijumu. Koristiti environment v
 - `Monitoring__HubUrl`
 
 MQTT ugovor je opisan u [docs/spec/mqtt-contract.md](docs/spec/mqtt-contract.md).
+
+## Profesor, asistent i lični uređaji
+
+Profesor kreira nalog asistenta na stranici „Moji uređaji”. Asistent registruje svoje uređaje kratkim skeniranjem i potvrdom izbora. Oni se automatski dodaju na listu dozvoljenih uređaja njegovih narednih sesija. Asistent vidi i kontroliše svoje sesije. Detalji postupka i povezivanja sa simulatorom nalaze se u [uputstvu za asistenta](docs/asistent-i-registracija-uredjaja.md).
+
+Prošireni završni rad i uputstvo za dopunu slika nalaze se u [docs/zavrsni-rad](docs/zavrsni-rad/PROCITAJ.md).

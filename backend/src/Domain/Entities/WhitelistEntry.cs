@@ -12,6 +12,14 @@ public sealed class WhitelistEntry
     public string DeviceHash { get; private set; } = string.Empty;
     public DateTimeOffset ValidFrom { get; private set; }
     public DateTimeOffset? ValidTo { get; private set; }
+    public Guid? StaffDeviceId { get; private set; }
+
+    public static WhitelistEntry ForStaffDevice(string sessionId, StaffDevice device, string username, DateTimeOffset now)
+    {
+        var entry = Create(sessionId, $"Osoblje: {username}", device.DeviceHash, now, null);
+        entry.StaffDeviceId = device.Id;
+        return entry;
+    }
 
     public static WhitelistEntry Create(
         string sessionId,

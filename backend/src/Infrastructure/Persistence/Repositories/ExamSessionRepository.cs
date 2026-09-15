@@ -20,6 +20,7 @@ public sealed class ExamSessionRepository(AppDbContext dbContext) : IExamSession
         Guid exceptId,
         CancellationToken cancellationToken = default)
         => dbContext.ExamSessions.AnyAsync(
-            x => x.RoomId == roomId && x.Status == "active" && x.Id != exceptId,
+            x => x.RoomId == roomId && x.Status == "active" && x.Id != exceptId &&
+                 (x.RegistrationExpiresAt == null || x.RegistrationExpiresAt > DateTimeOffset.UtcNow),
             cancellationToken);
 }

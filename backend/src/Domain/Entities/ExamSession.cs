@@ -12,6 +12,21 @@ public sealed class ExamSession
     public DateTimeOffset StartsAt { get; private set; }
     public DateTimeOffset? EndsAt { get; private set; }
     public string Status { get; private set; } = "draft";
+    public Guid? OwnerUserId { get; private set; }
+    public DateTimeOffset? RegistrationExpiresAt { get; private set; }
+
+    public void MarkAsRegistrationScan(DateTimeOffset expiresAt)
+    {
+        if (Status != "planned") throw new InvalidOperationException("Skeniranje mora prvo biti planirano.");
+        RegistrationExpiresAt = expiresAt;
+    }
+
+    public void SetOwner(Guid userId)
+    {
+        if (Status != "planned" || OwnerUserId is not null || userId == Guid.Empty)
+            throw new InvalidOperationException("Vlasnik se postavlja samo pri kreiranju sesije.");
+        OwnerUserId = userId;
+    }
 
     public static ExamSession Create(string name, string roomId, DateTimeOffset startsAt)
     {

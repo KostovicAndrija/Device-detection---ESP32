@@ -44,6 +44,13 @@ public sealed class DeviceObservation
             throw new ArgumentException("Capture timestamp is required.", nameof(capturedAt));
         }
 
+        if (capturedAt > DateTimeOffset.UtcNow.AddMinutes(5))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(capturedAt),
+                "Capture timestamp cannot be more than 5 minutes in the future.");
+        }
+
         return new DeviceObservation
         {
             DeviceId = deviceId,

@@ -30,6 +30,7 @@ export interface Alert {
 }
 
 export interface WhitelistEntry {
+  staffDeviceId?: string | null;
   id: string;
   sessionId: string;
   studentRef: string;
@@ -45,6 +46,7 @@ export interface DevicePosition {
   confidence: number;
   capturedAt: string;
   sensorCount: number;
+  isWhitelisted: boolean;
 }
 
 export interface SessionReport {
@@ -71,6 +73,10 @@ export class Api {
 
   startSession(id: string): Observable<ExamSession> {
     return this.http.post<ExamSession>(`${this.restBaseUrl}/sessions/${id}/start`, {});
+  }
+
+  startRoomSession(roomId: string): Observable<ExamSession> {
+    return this.http.post<ExamSession>(`${this.restBaseUrl}/sessions/start-for-room`, { roomId });
   }
 
   stopSession(id: string): Observable<ExamSession> {

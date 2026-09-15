@@ -14,6 +14,9 @@ public sealed class ApiExceptionHandler(
     {
         var status = exception switch
         {
+            UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+            Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => StatusCodes.Status409Conflict,
+            Microsoft.EntityFrameworkCore.DbUpdateException { InnerException: Npgsql.PostgresException { SqlState: "23505" } } => StatusCodes.Status409Conflict,
             ArgumentException => StatusCodes.Status400BadRequest,
             InvalidOperationException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
@@ -30,7 +33,8 @@ public sealed class ApiExceptionHandler(
             ProblemDetails = new ProblemDetails
             {
                 Status = status,
-                Title = status == 500 ? "An unexpected error occurred." : exception.Message
+                Title = status == 500 ? "An unexpected error occurred." :
+                    exception is Microsoft.EntityFrameworkCore.DbUpdateException ? "Podaci su u međuvremenu promenjeni ili već postoje. Osvežite prikaz i pokušajte ponovo." : exception.Message
             },
             Exception = exception
         });

@@ -5,6 +5,8 @@ using Application.Monitoring;
 using Application.Risk;
 using Domain.Entities;
 using Microsoft.Extensions.Logging;
+using Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Ingestion;
 
@@ -17,10 +19,21 @@ public sealed class LoggingRssiProcessingPipeline(
     IAppUnitOfWork unitOfWork,
     IDeviceHashingService hashingService,
     IRiskScoringService riskScoringService,
-    IMonitoringEventPublisher monitoringEventPublisher) : IRssiProcessingPipeline
+    IMonitoringEventPublisher monitoringEventPublisher,
+    AppDbContext db) : IRssiProcessingPipeline
 {
     public async Task ProcessAsync(RssiIngressMessage message, CancellationToken cancellationToken = default)
     {
+        var registration = false;
+        if (Guid.TryParse(message.SessionId, out var parsedSessionId))
+        {
+            var session = await db.ExamSessions.SingleOrDefaultAsync(s => s.Id == parsedSessionId, cancellationToken);
+            if (session?.RegistrationExpiresAt is { } expires)
+            {
+                if (session.Status != "active" || DateTimeOffset.UtcNow > expires || message.CreatedAt < session.StartsAt || message.CreatedAt > expires) return;
+                registration = true;
+            }
+        }
         if (!string.IsNullOrWhiteSpace(message.EventId) &&
             await observationRepository.ExistsByExternalIdAsync(message.EventId, cancellationToken))
         {
@@ -58,7 +71,10 @@ public sealed class LoggingRssiProcessingPipeline(
         var isWhitelisted = !string.IsNullOrWhiteSpace(message.SessionId) &&
                             await whitelistRepository.IsWhitelistedAsync(message.SessionId, deviceHash, cancellationToken);
 
-        var riskScore = riskScoringService.Calculate(message.Rssi, isWhitelisted, unknownDevice, message.SignalType);
+        var now = DateTimeOffset.UtcNow;
+        var staffDevice = await db.WhitelistEntries.AnyAsync(w => w.SessionId == message.SessionId && w.DeviceHash == deviceHash &&
+            w.StaffDeviceId != null && w.ValidFrom <= now && (w.ValidTo == null || w.ValidTo >= now), cancellationToken);
+        var riskScore = registration || staffDevice ? 0 : riskScoringService.Calculate(message.Rssi, isWhitelisted, unknownDevice, message.SignalType);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

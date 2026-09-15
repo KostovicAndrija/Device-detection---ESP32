@@ -1,20 +1,23 @@
 using Api.Hubs;
 using Application.Monitoring;
 using Microsoft.AspNetCore.SignalR;
+using Infrastructure.Persistence;
 
 namespace Api.Monitoring;
 
-public sealed class SignalRMonitoringEventPublisher(IHubContext<MonitoringHub> hubContext) : IMonitoringEventPublisher
+public sealed class SignalRMonitoringEventPublisher(IHubContext<MonitoringHub> hubContext, AppDbContext db) : IMonitoringEventPublisher
 {
+    private async Task Send(string name, object payload, CancellationToken ct)
+        => await hubContext.Clients.Groups(await MonitoringAudience.Groups(db, payload, ct)).SendAsync(name, payload, ct);
     public Task PublishDeviceUpdatedAsync(DeviceUpdatedEvent payload, CancellationToken cancellationToken = default)
-        => hubContext.Clients.All.SendAsync("deviceUpdated", payload, cancellationToken);
+        => Send("deviceUpdated", payload, cancellationToken);
 
     public Task PublishAlertCreatedAsync(AlertCreatedEvent payload, CancellationToken cancellationToken = default)
-        => hubContext.Clients.All.SendAsync("alertCreated", payload, cancellationToken);
+        => Send("alertCreated", payload, cancellationToken);
 
     public Task PublishAlertAcknowledgedAsync(AlertAcknowledgedEvent payload, CancellationToken cancellationToken = default)
-        => hubContext.Clients.All.SendAsync("alertAcknowledged", payload, cancellationToken);
+        => Send("alertAcknowledged", payload, cancellationToken);
 
     public Task PublishSessionStateChangedAsync(SessionStateChangedEvent payload, CancellationToken cancellationToken = default)
-        => hubContext.Clients.All.SendAsync("sessionStateChanged", payload, cancellationToken);
+        => Send("sessionStateChanged", payload, cancellationToken);
 }

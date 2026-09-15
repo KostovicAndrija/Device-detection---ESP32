@@ -19,7 +19,7 @@ public sealed class ObservationRetentionWorker(
                 var retentionHours = Math.Max(1, configuration.GetValue("Retention:ObservationHours", 24));
                 var cutoff = DateTimeOffset.UtcNow.AddHours(-retentionHours);
                 var expiredIds = await dbContext.ExamSessions
-                    .Where(x => x.Status == "completed" && x.EndsAt < cutoff)
+                    .Where(x => (x.Status == "completed" && x.EndsAt < cutoff) || x.RegistrationExpiresAt < cutoff)
                     .Select(x => x.Id)
                     .ToListAsync(stoppingToken);
                 var sessionIds = expiredIds.Select(x => x.ToString()).ToList();

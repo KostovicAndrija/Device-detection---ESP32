@@ -38,11 +38,13 @@ public sealed class WhitelistService(
             return false;
         }
 
+        if (entry.StaffDeviceId is not null)
+            throw new InvalidOperationException("Lični uređaji se uklanjaju na stranici Moji uređaji nakon zaustavljanja praćenja.");
         repository.Remove(entry);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }
 
     private static WhitelistEntryDto Map(WhitelistEntry entry)
-        => new(entry.Id, entry.SessionId, entry.StudentRef, entry.DeviceHash, entry.ValidFrom, entry.ValidTo);
+        => new(entry.Id, entry.SessionId, entry.StudentRef, entry.DeviceHash, entry.ValidFrom, entry.ValidTo, entry.StaffDeviceId);
 }
