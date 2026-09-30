@@ -1,0 +1,29 @@
+{
+  "id": "A-0-15",
+  "name": "Učionica A-0-15",
+  "description": "Raspored prema A-0-15_plan.pdf. Mere iz milimetara pretvorene u metre. Pet redova sa po dve klupe i jedna prednja desna klupa. Položaji tri ESP32 senzora su predlog i moraju se uskladiti sa fizičkim postavljanjem.",
+  "width": 5.88,
+  "height": 8.3807,
+  "revision": 1,
+  "computers": [
+    { "id": "K-01", "x": 1.07283, "y": 2.4087, "width": 2, "height": 0.6, "kind": "desk", "computerCount": 2 },
+    { "id": "K-02", "x": 4.29783, "y": 2.4087, "width": 2.7, "height": 0.6, "kind": "desk", "computerCount": 3 },
+    { "id": "K-03", "x": 1.07283, "y": 3.6087, "width": 2, "height": 0.6, "kind": "desk", "computerCount": 2 },
+    { "id": "K-04", "x": 4.29783, "y": 3.6087, "width": 2.7, "height": 0.6, "kind": "desk", "computerCount": 3 },
+    { "id": "K-05", "x": 1.07283, "y": 4.8087, "width": 2, "height": 0.6, "kind": "desk", "computerCount": 2 },
+    { "id": "K-06", "x": 4.29783, "y": 4.8087, "width": 2.7, "height": 0.6, "kind": "desk", "computerCount": 3 },
+    { "id": "K-07", "x": 1.07283, "y": 6.0087, "width": 2, "height": 0.6, "kind": "desk", "computerCount": 2 },
+    { "id": "K-08", "x": 4.29783, "y": 6.0087, "width": 2.7, "height": 0.6, "kind": "desk", "computerCount": 3 },
+    { "id": "K-09", "x": 1.07283, "y": 7.2087, "width": 2, "height": 0.6, "kind": "desk", "computerCount": 2 },
+    { "id": "K-10", "x": 4.29783, "y": 7.2087, "width": 2.7, "height": 0.6, "kind": "desk", "computerCount": 3 },
+    { "id": "K-11", "x": 4.59783, "y": 1.8087, "width": 2, "height": 0.6, "kind": "desk", "computerCount": 1, "isTeacherDesk": true }
+  ],
+  "boards": [
+    { "id": "TABLA-1", "x": 4.41, "y": 0.06, "width": 2.94, "height": 0.12 }
+  ],
+  "sensors": [
+    { "id": "S1", "x": 0, "y": 0, "model": "ESP32", "referenceRssi": -45, "pathLossExponent": 2.7 },
+    { "id": "S2", "x": 2.94, "y": 8.3807, "model": "ESP32", "referenceRssi": -45, "pathLossExponent": 2.7 },
+    { "id": "S3", "x": 5.88, "y": 0, "model": "ESP32", "referenceRssi": -45, "pathLossExponent": 2.7 }
+  ]
+}

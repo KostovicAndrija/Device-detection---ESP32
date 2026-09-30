@@ -72,8 +72,22 @@ public sealed class SessionsController(
     {
         try
         {
-            var session = await sessionService.StopAsync(id, cancellationToken);
-            return session is null ? NotFound() : Ok(session);
+            var result = await sessionService.StopAsync(id, cancellationToken);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new ProblemDetails { Title = ex.Message, Status = StatusCodes.Status409Conflict });
+        }
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Professor")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await sessionService.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
         }
         catch (InvalidOperationException ex)
         {

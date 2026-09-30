@@ -28,9 +28,10 @@ public sealed class LoggingRssiProcessingPipeline(
         if (Guid.TryParse(message.SessionId, out var parsedSessionId))
         {
             var session = await db.ExamSessions.SingleOrDefaultAsync(s => s.Id == parsedSessionId, cancellationToken);
+            if (session is null || session.Status != "active" || message.CreatedAt < session.StartsAt) return;
             if (session?.RegistrationExpiresAt is { } expires)
             {
-                if (session.Status != "active" || DateTimeOffset.UtcNow > expires || message.CreatedAt < session.StartsAt || message.CreatedAt > expires) return;
+                if (DateTimeOffset.UtcNow > expires || message.CreatedAt > expires) return;
                 registration = true;
             }
         }

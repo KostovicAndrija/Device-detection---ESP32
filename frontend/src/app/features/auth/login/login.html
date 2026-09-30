@@ -2,10 +2,10 @@
   <form class="panel login-card" (ngSubmit)="submit()">
     <p class="eyebrow">ESP32 monitoring</p>
     <h1>Prijava profesora</h1>
-    <label>Korisničko ime <input name="username" [(ngModel)]="username" required /></label>
-    <label>Lozinka <input name="password" type="password" [(ngModel)]="password" required /></label>
+    <label>Korisničko ime <input name="username" [(ngModel)]="username" autocomplete="username" spellcheck="false" required /></label>
+    <label>Lozinka <input name="password" type="password" [(ngModel)]="password" autocomplete="current-password" required /></label>
     @if (error()) { <p class="error">{{ error() }}</p> }
-    <button type="submit" [disabled]="loading()">{{ loading() ? 'Prijava…' : 'Prijavi se' }}</button>
-    <small>Razvojni nalog: admin / admin</small>
+    <button type="submit" [disabled]="loading()"><span class="material-symbols-outlined" aria-hidden="true">login</span>{{ loading() ? 'Prijava…' : 'Prijavi se' }}</button>
+    <small>Razvojni nalog: admin / admin123</small>
   </form>
 </main>

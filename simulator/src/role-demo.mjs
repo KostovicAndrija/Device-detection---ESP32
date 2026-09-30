@@ -23,7 +23,7 @@ export async function prepareRoleDemo({ role, api, login, publishDevice, sleep, 
       if (current) throw new Error('Finish or cancel the existing registration on My devices before starting the demo.');
       const scan = await api('/api/staff/scans', { method: 'POST', token, body: { roomId } });
       try {
-        await publishDevice(personalDevice, scan.id);
+        await publishDevice(personalDevice, scan.id, token);
         let candidate;
         for (let attempt = 0; attempt < 30; attempt++) {
           const data = await api(`/api/staff/scans/${scan.id}`, { token });

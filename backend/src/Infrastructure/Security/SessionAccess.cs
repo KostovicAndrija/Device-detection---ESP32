@@ -14,6 +14,11 @@ public sealed class AnonymousCurrentUser : ICurrentUser
 
 public sealed class SessionAccess(AppDbContext db, ICurrentUser user) : ISessionAccess
 {
+    public void EnsureProfessor()
+    {
+        if (!user.IsProfessor) throw new UnauthorizedAccessException("Samo profesor može da obriše sesiju.");
+    }
+
     public void SetOwner(ExamSession session)
     {
         if (user.Id is not { } id || (!user.IsProfessor && !user.IsAssistant)) throw new UnauthorizedAccessException();

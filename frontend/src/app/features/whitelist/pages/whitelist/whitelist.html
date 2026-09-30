@@ -8,10 +8,10 @@
     <label>MAC / identifikator<input name="device" [(ngModel)]="deviceIdentifier" required /></label>
     <label>Važi od<input name="from" type="datetime-local" [(ngModel)]="validFrom" required /></label>
     <label>Važi do<input name="to" type="datetime-local" [(ngModel)]="validTo" /></label>
-    <button type="submit" [disabled]="!sessionId">Dodaj</button>
+    <button class="add-button" type="submit" [disabled]="!sessionId"><span class="material-symbols-outlined" aria-hidden="true">add</span>Dodaj</button>
   </form> }
   <div class="panel table-wrap"><table><thead><tr><th>Student</th><th>Hash uređaja</th><th>Važi od</th><th></th></tr></thead>
     <tbody>@for (entry of entries(); track entry.id) { <tr><td>{{entry.studentRef}}</td><td>{{entry.deviceHash.slice(0,14)}}…</td>
-      <td>{{entry.validFrom | date:'short'}}</td><td>@if (entry.staffDeviceId) { Lični uređaj } @else if (auth.isProfessor()) { <button class="danger" (click)="remove(entry)">Ukloni</button> }</td></tr>
+      <td>{{entry.validFrom | date:'short'}}</td><td>@if (entry.staffDeviceId) { Lični uređaj } @else if (auth.isProfessor()) { <button class="danger" (click)="remove(entry)"><span class="material-symbols-outlined" aria-hidden="true">delete</span>Ukloni</button> }</td></tr>
     } @empty { <tr><td colspan="4">Whitelist je prazna.</td></tr> }</tbody></table></div>
 </section>

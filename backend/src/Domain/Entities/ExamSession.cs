@@ -13,6 +13,12 @@ public sealed class ExamSession
     public DateTimeOffset? EndsAt { get; private set; }
     public string Status { get; private set; } = "draft";
     public Guid? OwnerUserId { get; private set; }
+    public string? RoomSnapshotJson { get; private set; }
+    public void CaptureRoom(string json)
+    {
+        if (Status != "planned") throw new InvalidOperationException("Raspored se čuva pre početka sesije.");
+        RoomSnapshotJson = json;
+    }
     public DateTimeOffset? RegistrationExpiresAt { get; private set; }
 
     public void MarkAsRegistrationScan(DateTimeOffset expiresAt)

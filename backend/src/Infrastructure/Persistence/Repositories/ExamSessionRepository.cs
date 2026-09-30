@@ -15,6 +15,18 @@ public sealed class ExamSessionRepository(AppDbContext dbContext) : IExamSession
     public Task AddAsync(ExamSession session, CancellationToken cancellationToken = default)
         => dbContext.ExamSessions.AddAsync(session, cancellationToken).AsTask();
 
+    public Task<bool> HasObservationsAsync(Guid id, CancellationToken cancellationToken = default)
+        => dbContext.DeviceObservations.AnyAsync(x => x.SessionId == id.ToString(), cancellationToken);
+
+    public async Task RemoveWithRelatedDataAsync(ExamSession session, CancellationToken cancellationToken = default)
+    {
+        var sessionId = session.Id.ToString();
+        dbContext.Alerts.RemoveRange(await dbContext.Alerts.Where(x => x.SessionId == sessionId).ToListAsync(cancellationToken));
+        dbContext.WhitelistEntries.RemoveRange(await dbContext.WhitelistEntries.Where(x => x.SessionId == sessionId).ToListAsync(cancellationToken));
+        dbContext.DeviceObservations.RemoveRange(await dbContext.DeviceObservations.Where(x => x.SessionId == sessionId).ToListAsync(cancellationToken));
+        dbContext.ExamSessions.Remove(session);
+    }
+
     public Task<bool> HasActiveSessionInRoomAsync(
         string roomId,
         Guid exceptId,

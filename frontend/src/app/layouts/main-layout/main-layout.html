@@ -2,18 +2,19 @@
   <div>
     <h1>Detekcija uređaja</h1>
     <small class="status" [class.online]="realtime.connectionStatus() === 'connected'">
-      ● {{ connectionLabels[realtime.connectionStatus()] }}
+      <span class="material-symbols-outlined" aria-hidden="true">circle</span>{{ connectionLabels[realtime.connectionStatus()] }}
     </small>
   </div>
   <nav>
-    <a routerLink="/my-devices" routerLinkActive="active">Moji uređaji</a>
-    <a routerLink="/dashboard" routerLinkActive="active">Pregled</a>
-    <a routerLink="/floor-map" routerLinkActive="active">Mapa učionice</a>
-    <a routerLink="/devices" routerLinkActive="active">Uređaji</a>
-    <a routerLink="/alerts" routerLinkActive="active">Alarmi</a>
-    <a routerLink="/whitelist" routerLinkActive="active">Dozvoljeni uređaji</a>
-    <a routerLink="/reports" routerLinkActive="active">Izveštaji</a>
-    <button class="link-button" (click)="auth.logout()">Odjava</button>
+    @if(auth.isProfessor()) { <a routerLink="/classrooms" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">meeting_room</span>Učionice</a> }
+    @if(auth.isProfessor()) { <a routerLink="/assistants" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">group</span>Asistenti</a> }
+    <a routerLink="/dashboard" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">dashboard</span>Pregled</a>
+    <a routerLink="/floor-map" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">map</span>Mapa učionice</a>
+    <a routerLink="/devices" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">router</span>Uređaji</a>
+    <a routerLink="/alerts" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">notifications</span>Alarmi</a>
+    <a routerLink="/whitelist" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span>Dozvoljeni uređaji</a>
+    <a routerLink="/reports" routerLinkActive="active"><span class="material-symbols-outlined" aria-hidden="true">analytics</span>Izveštaji</a>
+    <button class="link-button" (click)="auth.logout()"><span class="material-symbols-outlined" aria-hidden="true">logout</span>Odjava</button>
   </nav>
 </header>
 

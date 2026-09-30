@@ -1,6 +1,6 @@
 <section class="page">
   <header class="page-header"><div><p class="eyebrow">Analitika</p><h2>Izveštaj sesije</h2></div>
-    <button [disabled]="!report()" (click)="exportCsv()">Izvezi CSV</button></header>
+    <button [disabled]="!report()" (click)="exportCsv()"><span class="material-symbols-outlined" aria-hidden="true">download</span>Izvezi CSV</button></header>
   <div class="panel toolbar"><label>Sesija<select [(ngModel)]="sessionId" (ngModelChange)="load()">
     @for (session of sessions(); track session.id) { <option [value]="session.id">{{ session.name }} — {{ session.status }}</option> }
   </select></label></div>

@@ -1,7 +1,6 @@
 using Application.Ingestion;
 using MQTTnet;
 using MQTTnet.Client;
-using System.Text.Json;
 
 namespace Worker;
 
@@ -10,7 +9,6 @@ public sealed class MqttWorker(
     IServiceScopeFactory serviceScopeFactory,
     IConfiguration configuration) : BackgroundService
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private readonly string _host = configuration.GetValue<string>("Mqtt:Host") ?? "localhost";
     private readonly int _port = configuration.GetValue<int?>("Mqtt:Port") ?? 1883;
     private readonly string _topic = configuration.GetValue<string>("Mqtt:Topic") ?? "sensors/+/rssi";
@@ -24,28 +22,19 @@ public sealed class MqttWorker(
         {
             try
             {
+                using var scope = serviceScopeFactory.CreateScope();
+                var decoder = scope.ServiceProvider.GetRequiredService<ISensorMessageDecoder>();
                 var payload = messageEvent.ApplicationMessage.PayloadSegment.Array is null
-                    ? null
-                    : JsonSerializer.Deserialize<WorkerIngressPayload>(
-                        messageEvent.ApplicationMessage.PayloadSegment,
-                        SerializerOptions);
+                    ? null : decoder.Decode(messageEvent.ApplicationMessage.PayloadSegment.AsMemory());
 
                 if (payload is null)
                 {
                     return;
                 }
 
-                using var scope = serviceScopeFactory.CreateScope();
                 var ingestionService = scope.ServiceProvider.GetRequiredService<IRssiIngestionService>();
 
-                var ingressMessage = new RssiIngressMessage(
-                    DeviceIdentifier: payload.DeviceIdentifier,
-                    SensorId: payload.SensorId,
-                    SessionId: payload.SessionId,
-                    SignalType: payload.SignalType,
-                    Rssi: payload.Rssi,
-                    CreatedAt: payload.Timestamp ?? DateTimeOffset.UtcNow,
-                    EventId: payload.EventId);
+                var ingressMessage = payload;
 
                 await ingestionService.IngestAsync(ingressMessage, stoppingToken);
                 logger.LogInformation("Processed MQTT message from {SensorId} with RSSI {Rssi}", payload.SensorId, payload.Rssi);
@@ -81,12 +70,4 @@ public sealed class MqttWorker(
         }
     }
 
-    private sealed record WorkerIngressPayload(
-        string DeviceIdentifier,
-        string SensorId,
-        string? SessionId,
-        string SignalType,
-        double Rssi,
-        DateTimeOffset? Timestamp,
-        string? EventId);
 }

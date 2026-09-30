@@ -21,12 +21,16 @@ nav {
 }
 
 h1 { font-size: 1.15rem; margin: 0; }
-.status { color: #fca5a5; text-transform: capitalize; }
+.status { align-items: center; color: #fca5a5; display: inline-flex; gap: .3rem; text-transform: capitalize; }
+.status .material-symbols-outlined { font-size: .7rem; font-variation-settings: 'FILL' 1; }
 .status.online { color: #86efac; }
 .link-button { background: transparent; color: #d1d5db; padding: 0; }
 
 a {
+  align-items: center;
   color: #d1d5db;
+  display: inline-flex;
+  gap: .35rem;
   text-decoration: none;
 }
 

@@ -11,7 +11,8 @@ namespace Api.Controllers;
 [ApiController]
 [Authorize(Roles = "Professor,Assistant")]
 [Route("api/staff")]
-public sealed class StaffController(AppDbContext db, ICurrentUser current, IPasswordHasher<AppUser> passwords) : ControllerBase
+public sealed class StaffController(AppDbContext db, ICurrentUser current, IPasswordHasher<AppUser> passwords,
+    Application.Localization.IRoomLayoutProvider layouts) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<IActionResult> Me(CancellationToken ct) => Ok(await db.Users.Where(u => u.Id == current.Id)
@@ -56,6 +57,7 @@ public sealed class StaffController(AppDbContext db, ICurrentUser current, IPass
         var scan = ExamSession.Create("Registracija ličnih uređaja", request.RoomId, now);
         scan.SetOwner(user.Id);
         scan.MarkAsRegistrationScan(now.AddMinutes(2));
+        await layouts.CaptureAsync(scan, ct);
         scan.Start(now);
         db.ExamSessions.Add(scan);
         await db.SaveChangesAsync(ct);

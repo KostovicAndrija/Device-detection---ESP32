@@ -6,6 +6,7 @@ const MQTT_URL = process.env.MQTT_URL ?? 'mqtt://localhost:1883';
 const API_URL = (process.env.API_URL ?? 'http://localhost:7108').replace(/\/$/, '');
 const USERNAME = process.env.APP_USERNAME ?? 'admin';
 const PASSWORD = process.env.APP_PASSWORD ?? 'admin';
+const DEFAULT_PERSONAL_DEVICE = 'SIM-MY-DEVICE-E2E';
 const args = process.argv.slice(2);
 const command = args[0] ?? 'help';
 
@@ -154,7 +155,90 @@ const noise = [0, -1.2, 0.8, -0.5, 1.1, -0.7, 0.4];
 
 function rssiAt(point, sensor, sampleIndex) {
   const distance = Math.max(1, Math.hypot(point.x - sensor.x, point.y - sensor.y));
-  return Math.max(-120, Math.min(0, Math.round((-45 - 27 * Math.log10(distance) + noise[sampleIndex % noise.length]) * 10) / 10));
+  return Math.max(-120, Math.min(0, Math.round(((sensor.referenceRssi ?? -45) - 10 * (sensor.pathLossExponent ?? 2.7) * Math.log10(distance) + noise[sampleIndex % noise.length]) * 10) / 10));
+}
+
+async function registration(client, token, sessionId) {
+  if (!sessionId) throw new Error('Start registration on "My devices", then pass its ID with --session <guid>.');
+  const [{ scan }, { layout }] = await Promise.all([
+    api(`/api/staff/scans/${sessionId}`, { token }),
+    api(`/api/sessions/${sessionId}/layout`, { token })
+  ]);
+  if (scan.status !== 'active') throw new Error('The supplied registration scan is not active. Start a new scan on "My devices".');
+  if (layout.sensors.length < 1) throw new Error('The selected classroom has no configured sensors.');
+
+  const point = {
+    x: numberOption('x', Math.max(.1, layout.width / 2)),
+    y: numberOption('y', Math.max(.1, layout.height / 2))
+  };
+  if (point.x > layout.width || point.y > layout.height)
+    throw new Error(`Position must be inside the classroom: 0 < x <= ${layout.width}, 0 < y <= ${layout.height}.`);
+  const duration = numberOption('duration', 120);
+  const intervalSeconds = numberOption('interval', 2);
+  const device = option('device', DEFAULT_PERSONAL_DEVICE);
+  const signal = option('signal', 'wifi');
+  console.log(`Registration simulation: ${device} at (${point.x}, ${point.y}) m`);
+  console.log(`Open http://localhost:4200/my-devices and confirm the device when its marker appears.`);
+
+  const started = Date.now();
+  let tick = 0;
+  while ((Date.now() - started) / 1000 < duration) {
+    for (let index = 0; index < layout.sensors.length; index++) {
+      const sensor = layout.sensors[index];
+      await publish(client, sensor.id, reading({
+        device, sensor: sensor.id, sessionId, signal,
+        rssi: rssiAt(point, sensor, tick * layout.sensors.length + index)
+      }));
+    }
+    if (tick % 3 === 0) {
+      const state = await api(`/api/staff/scans/${sessionId}`, { token });
+      if (state.scan.status !== 'active') {
+        console.log('PASS device confirmed; registration scan is complete.');
+        return;
+      }
+      console.log(`  sample ${tick + 1}: ${state.candidates.length} candidate(s), waiting for confirmation`);
+    }
+    tick++;
+    await sleep(intervalSeconds * 1000);
+  }
+  console.log('Simulation time elapsed. The detected candidate remains available for confirmation for ten minutes.');
+}
+
+async function registeredDevice(client, token, sessionId) {
+  if (!sessionId) throw new Error('Start an exam session, then pass its ID with --session <guid>.');
+  const [session, layoutResponse] = await Promise.all([
+    api(`/api/sessions/${sessionId}`, { token }),
+    api(`/api/sessions/${sessionId}/layout`, { token })
+  ]);
+  if (session.status !== 'active') throw new Error('The supplied exam session is not active.');
+  const layout = layoutResponse.layout;
+  if (layout.sensors.length < 1) throw new Error('The selected classroom has no configured sensors.');
+  const point = {
+    x: numberOption('x', Math.max(.1, layout.width / 2)),
+    y: numberOption('y', Math.max(.1, layout.height / 2))
+  };
+  if (point.x > layout.width || point.y > layout.height)
+    throw new Error(`Position must be inside the classroom: 0 < x <= ${layout.width}, 0 < y <= ${layout.height}.`);
+  const duration = numberOption('duration', 300);
+  const intervalSeconds = numberOption('interval', 2);
+  const device = option('device', DEFAULT_PERSONAL_DEVICE);
+  const signal = option('signal', 'wifi');
+  console.log(`Registered-device simulation: ${device} at (${point.x}, ${point.y}) m in session ${sessionId}`);
+  console.log('The device is whitelisted only if --device exactly matches the identifier used during registration.');
+  const started = Date.now();
+  let tick = 0;
+  while ((Date.now() - started) / 1000 < duration) {
+    for (let index = 0; index < layout.sensors.length; index++) {
+      const sensor = layout.sensors[index];
+      await publish(client, sensor.id, reading({
+        device, sensor: sensor.id, sessionId, signal,
+        rssi: rssiAt(point, sensor, tick * layout.sensors.length + index)
+      }));
+    }
+    if (tick % 5 === 0) console.log(`  sample ${tick + 1}: (${point.x}, ${point.y}) m`);
+    tick++;
+    await sleep(intervalSeconds * 1000);
+  }
 }
 
 async function localization(client, token, sessionId) {
@@ -221,6 +305,8 @@ async function load(client, sessionId) {
 }
 
 async function demo(client, token, sessionId, personalDevice = null) {
+  const { layout } = await api(`/api/sessions/${sessionId}/layout`, { token });
+  const demoSensors = layout.sensors;
   const duration = numberOption('duration', 900);
   const intervalSeconds = numberOption('interval', 2);
   const deviceCount = Math.max(1, Math.min(5, Math.floor(numberOption('devices', 5))));
@@ -231,13 +317,14 @@ async function demo(client, token, sessionId, personalDevice = null) {
     { x: 2.1, y: 4.5 },
     { x: 5.9, y: 4.5 }
   ];
+  const registeredDevice = personalDevice ?? DEFAULT_PERSONAL_DEVICE;
   const demoDevices = Array.from({ length: deviceCount }, (_, index) => ({
-    id: index === 0 && personalDevice ? personalDevice : `SIM-DEMO-${String(index + 1).padStart(2, '0')}`,
+    id: index === 0 ? registeredDevice : `SIM-DEMO-${String(index + 1).padStart(2, '0')}`,
     joinsAt: index * 3,
     phase: index * 5,
-    zone: zones[index]
+    zone: { x: zones[index].x / 8 * layout.width, y: zones[index].y / 6 * layout.height }
   }));
-  if (!personalDevice) await addWhitelist(token, sessionId, demoDevices[0].id, 'DEMO-WHITELIST-1');
+  console.log(`Saved-device candidate in demo: ${registeredDevice}`);
 
   // Isti serijski boot/status format koji ispisuje stvarni ESP32 sniffer.
   // MQTT poruke ispod ostaju JSON jer ih takve očekuje ingestion worker.
@@ -256,11 +343,11 @@ async function demo(client, token, sessionId, personalDevice = null) {
       if ((elapsed - device.joinsAt + device.phase) % 90 >= 75) continue;
       const angle = elapsed * 0.12 + index * 1.25;
       const point = {
-        x: device.zone.x + Math.cos(angle) * 0.35,
-        y: device.zone.y + Math.sin(angle * 0.85) * 0.3
+        x: Math.max(0, Math.min(layout.width, device.zone.x + Math.cos(angle) * Math.min(0.35, layout.width / 20))),
+        y: Math.max(0, Math.min(layout.height, device.zone.y + Math.sin(angle * 0.85) * Math.min(0.3, layout.height / 20)))
       };
-      for (let sensorIndex = 0; sensorIndex < sensors.length; sensorIndex++) {
-        const sensor = sensors[sensorIndex];
+      for (let sensorIndex = 0; sensorIndex < demoSensors.length; sensorIndex++) {
+        const sensor = demoSensors[sensorIndex];
         await publish(client, sensor.id, reading({
           device: device.id,
           sensor: sensor.id,
@@ -313,13 +400,19 @@ Scenarios:
   localization   Deterministic movement observed by S1, S2 and S3
   edge-cases     Duplicates, boundaries, bad JSON, missing fields and bad values
   load           Configurable traffic volume
-  demo           Live classroom traffic with devices appearing and fading
+  demo           Live traffic including the saved device and suspicious devices
   demo-professor Professor-owned demo (default room UC-101)
   demo-assistant Assistant-owned demo with personal-device registration (UC-202)
+  registration   Emit one positioned device into an active "My devices" scan
+  registered-device Emit the saved device inside an active exam session
 
 Options:
   --room <id>        Room for demo-professor/demo-assistant
   --session <id>     Use an existing session instead of creating one
+  --device <id>      Simulated registration device identifier
+  --signal <type>    Registration signal: wifi, ble or bluetooth (default wifi)
+  --x <metres>       Registration device X coordinate (default room center)
+  --y <metres>       Registration device Y coordinate (default room center)
   --devices <n>      Device count (demo default and maximum 5, load default 100)
   --count <n>        Message count for load (default devices * 5)
   --rate <n>         Messages per second for load (default 20)
@@ -340,11 +433,29 @@ async function main() {
         sessionId: option('session', null),
         assistantUsername: process.env.ASSISTANT_USERNAME ?? 'demo-asistent',
         assistantPassword: process.env.ASSISTANT_PASSWORD ?? 'AsistentDemo2026!',
-        publishDevice: (device, sessionId) => publish(client, 'S1', reading({ device, sessionId, rssi: -40 })) });
+        publishDevice: async (device, sessionId, token) => {
+          const { layout } = await api(`/api/sessions/${sessionId}/layout`, { token });
+          const sensor = layout.sensors[0].id;
+          await publish(client, sensor, reading({ device, sensor, sessionId, rssi: -40 }));
+        } });
       console.log(`Demo ${role}: ${prepared.username}; room ${prepared.roomId}; session ${prepared.sessionId}`);
       console.log(`Open http://localhost:4200/floor-map?room=${prepared.roomId}&session=${prepared.sessionId}`);
       await demo(client, prepared.token, prepared.sessionId, prepared.personalDevice);
     } finally { await new Promise(resolve => client.end(false, {}, resolve)); }
+    return;
+  }
+  if (command === 'registration') {
+    const token = await login();
+    const client = await connectMqtt();
+    try { await registration(client, token, option('session', null)); }
+    finally { await new Promise(resolve => client.end(false, {}, resolve)); }
+    return;
+  }
+  if (command === 'registered-device') {
+    const token = await login();
+    const client = await connectMqtt();
+    try { await registeredDevice(client, token, option('session', null)); }
+    finally { await new Promise(resolve => client.end(false, {}, resolve)); }
     return;
   }
   const suppliedSession = option('session', null);

@@ -16,7 +16,7 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
 
   username = 'admin';
-  password = 'admin';
+  password = 'admin123';
   readonly loading = signal(false);
   readonly error = signal('');
 

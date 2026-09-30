@@ -2,8 +2,6 @@ namespace Application.Localization;
 
 public sealed class LocalizationService : ILocalizationService
 {
-    private const double ReferenceRssiAtOneMeter = -45;
-    private const double PathLossExponent = 2.7;
 
     public LocationEstimateDto? Estimate(IReadOnlyCollection<SensorReadingDto> readings)
     {
@@ -21,7 +19,7 @@ public sealed class LocalizationService : ILocalizationService
             .Select(x => new
             {
                 Reading = x,
-                Distance = Math.Pow(10, (ReferenceRssiAtOneMeter - x.Rssi) / (10 * PathLossExponent)),
+                Distance = Math.Pow(10, (x.ReferenceRssi - x.Rssi) / (10 * x.PathLossExponent)),
                 Weight = Math.Pow(10, (x.Rssi + 100) / 20)
             })
             .OrderByDescending(x => x.Weight)

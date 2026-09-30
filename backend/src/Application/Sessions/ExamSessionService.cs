@@ -9,12 +9,14 @@ public sealed class ExamSessionService(
     IExamSessionRepository repository,
     IAppUnitOfWork unitOfWork,
     IMonitoringEventPublisher monitoringEventPublisher,
-    ISessionAccess access) : IExamSessionService
+    ISessionAccess access,
+    Application.Localization.IRoomLayoutProvider layouts) : IExamSessionService
 {
     public async Task<SessionDto> CreateAsync(CreateSessionRequest request, CancellationToken cancellationToken = default)
     {
         var session = ExamSession.Create(request.Name, request.RoomId, request.StartsAt);
         access.SetOwner(session);
+        await layouts.CaptureAsync(session, cancellationToken);
         await repository.AddAsync(session, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Map(session);
@@ -52,6 +54,7 @@ public sealed class ExamSessionService(
 
         if (session.Status != "planned") throw new InvalidOperationException("Samo planirana sesija može da se pokrene.");
         await access.PrepareStartAsync(session, cancellationToken);
+        await layouts.CaptureAsync(session, cancellationToken);
         session.Start(DateTimeOffset.UtcNow);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await monitoringEventPublisher.PublishSessionStateChangedAsync(
@@ -82,6 +85,7 @@ public sealed class ExamSessionService(
         var session = ExamSession.Create(name, roomId, now);
         access.SetOwner(session);
         await access.PrepareStartAsync(session, cancellationToken);
+        await layouts.CaptureAsync(session, cancellationToken);
         session.Start(now);
         await repository.AddAsync(session, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -91,7 +95,7 @@ public sealed class ExamSessionService(
         return Map(session);
     }
 
-    public async Task<SessionDto?> StopAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<StopSessionResult?> StopAsync(Guid id, CancellationToken cancellationToken = default)
     {
         await access.EnsureAccessAsync(id, cancellationToken);
         var session = await repository.GetByIdAsync(id, cancellationToken);
@@ -101,11 +105,38 @@ public sealed class ExamSessionService(
         }
 
         session.Stop(DateTimeOffset.UtcNow);
+
+        if (!await repository.HasObservationsAsync(id, cancellationToken))
+        {
+            await repository.RemoveWithRelatedDataAsync(session, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await monitoringEventPublisher.PublishSessionStateChangedAsync(
+                new SessionStateChangedEvent(session.Id, "deleted", DateTimeOffset.UtcNow),
+                cancellationToken);
+            return new StopSessionResult(null, true);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await monitoringEventPublisher.PublishSessionStateChangedAsync(
             new SessionStateChangedEvent(session.Id, session.Status, DateTimeOffset.UtcNow),
             cancellationToken);
-        return Map(session);
+        return new StopSessionResult(Map(session), false);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        access.EnsureProfessor();
+        var session = await repository.GetByIdAsync(id, cancellationToken);
+        if (session is null) return false;
+        if (session.RegistrationExpiresAt is not null)
+            throw new InvalidOperationException("Registraciono skeniranje se ne briše kroz istoriju sesija.");
+
+        await repository.RemoveWithRelatedDataAsync(session, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await monitoringEventPublisher.PublishSessionStateChangedAsync(
+            new SessionStateChangedEvent(session.Id, "deleted", DateTimeOffset.UtcNow),
+            cancellationToken);
+        return true;
     }
 
     private static SessionDto Map(ExamSession session)

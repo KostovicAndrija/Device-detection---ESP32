@@ -1,5 +1,5 @@
 <section class="page">
-  <header class="page-header"><div><p class="eyebrow">Kontrolni centar</p><h2>Ispitni dashboard</h2></div><button (click)="load()" [disabled]="loading()">{{ loading() ? 'Osvežavam…' : 'Osveži' }}</button></header>
+  <header class="page-header"><div><p class="eyebrow">Kontrolni centar</p><h2>Ispitni dashboard</h2></div><button (click)="load()" [disabled]="loading()"><span class="material-symbols-outlined" aria-hidden="true">refresh</span>{{ loading() ? 'Osvežavam…' : 'Osveži' }}</button></header>
   @if (error()) { <p class="error">{{ error() }}</p> }
   <div class="grid">
     <article class="panel metric"><strong>{{ realtime.connectedDevices() }}</strong><span>uređaja uživo</span></article>
@@ -10,15 +10,15 @@
   <section>
     <div class="section-heading"><div><p class="eyebrow">Prostorije</p><h3>Učionice</h3></div><p>Izaberi učionicu i odmah pokreni očitavanje.</p></div>
     <div class="classroom-grid">
-      @for (room of classrooms; track room.id) {
+      @for (room of classrooms(); track room.id) {
         <article class="panel classroom-card" (click)="openRoom(room.id)" tabindex="0" (keydown.enter)="openRoom(room.id)">
-          <div class="room-title"><div><span class="room-code">{{ room.id }}</span><h3>{{ room.name }}</h3></div><strong>{{ room.capacity }}</strong></div>
+          <div class="room-title"><div><span class="room-code">{{ room.id }}</span><h3>{{ room.name }}</h3></div><strong>{{ room.computers.length }}</strong></div>
           <p>{{ room.description }}</p>
           <div class="room-actions">
             @if (activeFor(room.id); as active) {
-              <span class="badge active">Očitavanje aktivno</span><button (click)="openRoom(room.id, active.id); $event.stopPropagation()">Otvori mapu</button>
+              <span class="badge active">Očitavanje aktivno</span><button (click)="openRoom(room.id, active.id); $event.stopPropagation()"><span class="material-symbols-outlined" aria-hidden="true">map</span>Otvori mapu</button>
             } @else {
-              <span class="badge">Spremna</span><button (click)="startRoom(room); $event.stopPropagation()" [disabled]="startingRoom() === room.id">{{ startingRoom() === room.id ? 'Pokrećem…' : 'Počni očitavanje' }}</button>
+              <span class="badge">Spremna</span><button (click)="startRoom(room); $event.stopPropagation()" [disabled]="startingRoom() === room.id"><span class="material-symbols-outlined" aria-hidden="true">play_arrow</span>{{ startingRoom() === room.id ? 'Pokrećem…' : 'Počni očitavanje' }}</button>
             }
           </div>
         </article>
@@ -31,7 +31,7 @@
       <tbody>@for (session of sessions(); track session.id) {
         <tr class="clickable-row" (click)="openSession(session)" tabindex="0" (keydown.enter)="openSession(session)">
           <td>{{ session.name }}</td><td>{{ session.roomId }}</td><td>{{ session.startsAt | date:'short' }}</td><td><span class="badge" [class.active]="session.status === 'active'">{{ session.status }}</span></td>
-          <td>@if (session.status === 'active') { <button class="danger" (click)="stop(session, $event)">Zaustavi</button> } @else { <button (click)="openSession(session); $event.stopPropagation()">Mapa</button> }</td>
+          <td><div class="session-actions">@if (session.status === 'active') { <button class="danger" (click)="stop(session, $event)"><span class="material-symbols-outlined" aria-hidden="true">stop</span>Zaustavi</button> } @else { <button (click)="openSession(session); $event.stopPropagation()"><span class="material-symbols-outlined" aria-hidden="true">map</span>Mapa</button> } @if (auth.isProfessor()) { <button class="danger" (click)="delete(session, $event)"><span class="material-symbols-outlined" aria-hidden="true">delete</span>Obriši</button> }</div></td>
         </tr>
       } @empty { <tr><td colspan="5">Još nema sesija. Pokreni očitavanje iz neke učionice.</td></tr> }</tbody>
     </table>

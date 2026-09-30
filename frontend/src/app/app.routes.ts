@@ -13,7 +13,9 @@ export const routes: Routes = [
     component: MainLayout,
     canActivateChild: [authGuard],
     children: [
-      { path: 'my-devices', loadComponent: () => import('./features/staff/staff').then(m => m.Staff) },
+      { path: 'classrooms', loadComponent: () => import('./features/classrooms/classrooms').then(m => m.Classrooms) },
+      { path: 'assistants', loadComponent: () => import('./features/staff/staff').then(m => m.Staff) },
+      { path: 'my-devices', redirectTo: 'assistants', pathMatch: 'full' },
       {
         path: '',
         pathMatch: 'full',

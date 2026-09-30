@@ -7,7 +7,8 @@ public sealed record DevicePositionDto(
     double Confidence,
     DateTimeOffset CapturedAt,
     int SensorCount,
-    bool IsWhitelisted);
+    bool IsWhitelisted,
+    string SignalType = "unknown");
 
 public sealed class LocalizationOptions
 {

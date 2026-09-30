@@ -11,6 +11,7 @@ public interface ICurrentUser
 
 public interface ISessionAccess
 {
+    void EnsureProfessor();
     void SetOwner(ExamSession session);
     Task EnsureAccessAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<IReadOnlySet<Guid>?> AccessibleIdsAsync(CancellationToken cancellationToken = default);

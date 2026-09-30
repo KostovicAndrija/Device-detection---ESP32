@@ -7,5 +7,6 @@ public interface IExamSessionService
     Task<SessionDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<SessionDto?> StartAsync(Guid id, CancellationToken cancellationToken = default);
     Task<SessionDto> StartForRoomAsync(StartRoomSessionRequest request, CancellationToken cancellationToken = default);
-    Task<SessionDto?> StopAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<StopSessionResult?> StopAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { RoomLayout } from './rooms';
 
 export interface ExamSession {
   id: string;
@@ -40,6 +41,7 @@ export interface WhitelistEntry {
 }
 
 export interface DevicePosition {
+  signalType?: string;
   deviceId: string;
   x: number;
   y: number;
@@ -57,8 +59,16 @@ export interface SessionReport {
   generatedAt: string;
 }
 
+export interface StopSessionResult {
+  session: ExamSession | null;
+  deleted: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class Api {
+  sessionLayout(id:string) { return this.http.get<{layout:RoomLayout;hasSnapshot:boolean}>(`/api/sessions/${id}/layout`); }
+  history(id:string) { return this.http.get<{observationCount:number;firstAt:string|null;lastAt:string|null;hasSnapshot:boolean;estimatorVersion:string}>(`/api/sessions/${id}/history`); }
+  replay(id:string,at:string) { return this.http.get<DevicePosition[]>(`/api/sessions/${id}/history/frame`,{params:{at}}); }
   private readonly http = inject(HttpClient);
   readonly restBaseUrl = '/api';
   readonly signalRHubUrl = '/hubs/monitoring';
@@ -79,8 +89,12 @@ export class Api {
     return this.http.post<ExamSession>(`${this.restBaseUrl}/sessions/start-for-room`, { roomId });
   }
 
-  stopSession(id: string): Observable<ExamSession> {
-    return this.http.post<ExamSession>(`${this.restBaseUrl}/sessions/${id}/stop`, {});
+  stopSession(id: string): Observable<StopSessionResult> {
+    return this.http.post<StopSessionResult>(`${this.restBaseUrl}/sessions/${id}/stop`, {});
+  }
+
+  deleteSession(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.restBaseUrl}/sessions/${id}`);
   }
 
   activeDevices(windowMinutes = 10): Observable<Device[]> {

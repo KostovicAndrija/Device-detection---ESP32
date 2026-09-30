@@ -3,7 +3,7 @@
   <div class="panel toolbar">
     <label>Pretraga<input [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Hash ili tip" /></label>
     <label>Prozor (min)<input type="number" min="1" [(ngModel)]="windowMinutes" /></label>
-    <button (click)="load()">Osveži</button>
+    <button (click)="load()"><span class="material-symbols-outlined" aria-hidden="true">refresh</span>Osveži</button>
   </div>
   <div class="panel table-wrap"><table><thead><tr><th>Hash</th><th>Tip</th><th>Prvi put</th><th>Poslednji put</th></tr></thead>
     <tbody>@for (device of filtered(); track device.id) {

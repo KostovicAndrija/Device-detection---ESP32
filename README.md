@@ -1,5 +1,7 @@
 # ESP32 Device Detection
 
+Uputstvo za nove funkcije: [učionice, istorija sesija i proširenja senzora i AI modela](docs/ucionice-istorija-i-prosirenja.md).
+
 Sistem za pasivnu detekciju Wi-Fi/BLE aktivnosti tokom ispitnih sesija. ESP32 senzori šalju RSSI metapodatke kroz MQTT, .NET worker ih obrađuje i čuva u PostgreSQL, a Angular dashboard prikazuje uređaje, alarme i procenjene pozicije u realnom vremenu.
 
 ## Komponente
@@ -65,6 +67,31 @@ npx tsc -p tsconfig.spec.json --noEmit
 
 ## Simulacija ESP32 senzora
 
+### Registracija na stranici „Mapa učionice“
+
+Profesor prvo otvara **Mapa učionice**, bira učionicu i pokreće registraciono
+skeniranje. Na stranici se prikazuju plan učionice i ID skeniranja. Simulator se
+zatim pokreće sa tim ID-em i emituje uređaj sa zadate pozicije:
+
+```powershell
+docker compose --profile tools run --rm --build simulator registration --session <id-skeniranja> --x 2.5 --y 4
+```
+
+Marker uređaja pojavljuje se na mapi. Profesor označava pronađeni uređaj, unosi
+naziv i potvrđuje registraciju. Uređaj se nakon toga automatski whitelistuje u
+svakoj sesiji koju taj profesor ili asistent pokrene.
+
+Posle potvrde pokrenuti regularnu sesiju, kopirati njen ID iz URL-a mape i poslati
+veliku simulaciju u tu sesiju:
+
+```powershell
+docker compose --profile tools run --rm --build simulator demo --session <id-sesije>
+```
+
+Prvi uređaj u velikoj simulaciji je registrovani `SIM-MY-DEVICE-E2E`, dok su
+preostali uređaji neregistrovani. Tako se u jednom toku vide i dozvoljeni uređaj
+i uređaji koji treba da izazovu upozorenja.
+
 Kompletan MQTT end-to-end test bez fizičkih senzora:
 
 ```powershell
@@ -103,6 +130,6 @@ MQTT ugovor je opisan u [docs/spec/mqtt-contract.md](docs/spec/mqtt-contract.md)
 
 ## Profesor, asistent i lični uređaji
 
-Profesor kreira nalog asistenta na stranici „Moji uređaji”. Asistent registruje svoje uređaje kratkim skeniranjem i potvrdom izbora. Oni se automatski dodaju na listu dozvoljenih uređaja njegovih narednih sesija. Asistent vidi i kontroliše svoje sesije. Detalji postupka i povezivanja sa simulatorom nalaze se u [uputstvu za asistenta](docs/asistent-i-registracija-uredjaja.md).
+Profesor kreira nalog asistenta na stranici „Asistenti”. Asistent registruje svoje uređaje na stranici „Mapa učionice” kratkim skeniranjem i potvrdom izbora. Oni se automatski dodaju na listu dozvoljenih uređaja njegovih narednih sesija. Asistent vidi i kontroliše svoje sesije. Detalji postupka i povezivanja sa simulatorom nalaze se u [uputstvu za asistenta](docs/asistent-i-registracija-uredjaja.md).
 
 Prošireni završni rad i uputstvo za dopunu slika nalaze se u [docs/zavrsni-rad](docs/zavrsni-rad/PROCITAJ.md).

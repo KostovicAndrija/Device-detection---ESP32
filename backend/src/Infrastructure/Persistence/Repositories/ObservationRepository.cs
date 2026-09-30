@@ -6,6 +6,9 @@ namespace Infrastructure.Persistence.Repositories;
 
 public sealed class ObservationRepository(AppDbContext dbContext) : IObservationRepository
 {
+    public async Task<IReadOnlyList<DeviceObservation>> GetWindowAsync(string sessionId, DateTimeOffset from, DateTimeOffset until, CancellationToken ct = default)
+        => await dbContext.DeviceObservations.AsNoTracking().Where(o => o.SessionId == sessionId && o.CapturedAt >= from && o.CapturedAt <= until)
+            .OrderBy(o => o.CapturedAt).ThenBy(o => o.Id).ToListAsync(ct);
     public Task AddAsync(DeviceObservation observation, CancellationToken cancellationToken = default)
         => dbContext.DeviceObservations.AddAsync(observation, cancellationToken).AsTask();
 

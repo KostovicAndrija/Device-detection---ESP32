@@ -3,10 +3,15 @@
 body { margin: 0; }
 h1, h2, h3, p { margin-top: 0; }
 button, input, select { border: 1px solid #cbd5e1; border-radius: .45rem; font: inherit; padding: .6rem .8rem; }
-button { background: #2563eb; border: 0; color: white; cursor: pointer; font-weight: 600; }
+button { align-items: center; background: #2563eb; border: 0; color: white; cursor: pointer; display: inline-flex; gap: .4rem; justify-content: center; font-weight: 600; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 button.danger { background: #dc2626; }
 button.secondary { background: #475569; }
+button.add-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; background: #e6f7ef; color: #116149; border: 1px solid #94d5bb; }
+button.add-button:hover:not(:disabled) { background: #c9efdf; border-color: #329c74; }
+.material-symbols-outlined { direction: ltr; display: inline-block; flex: 0 0 auto; font-feature-settings: 'liga'; font-size: 1.2em; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; line-height: 1; white-space: nowrap; }
+.icon-only { aspect-ratio: 1; padding: .55rem; }
+button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
 .page { display: grid; gap: 1rem; max-width: 1280px; margin: auto; }
 .page-header { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; }
 .panel { background: white; border: 1px solid #e2e8f0; border-radius: .75rem; box-shadow: 0 4px 16px #0f172a0a; padding: 1rem; }

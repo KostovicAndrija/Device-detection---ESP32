@@ -24,6 +24,32 @@ docker compose logs --tail 100 worker
 
 ## Individual scenarios
 
+### Manual registration on the classroom map
+
+Log in, open **Classroom map**, select a classroom and click the
+registration scan button. Copy the registration ID shown on that page, then run:
+
+```powershell
+docker compose --profile tools run --rm --build simulator registration --session <registration-id> --x 2.5 --y 4
+```
+
+The simulator publishes the same device from every configured classroom sensor.
+The application shows the candidate and its estimated position on the classroom
+map. Enter a label and confirm it on **Classroom map**. The simulator detects the
+confirmation and exits successfully. `--device`, `--signal`, `--duration` and
+`--interval` can be used to change the simulated device and stream.
+
+After confirming the device, start a normal exam session from the dashboard, copy
+the session ID from the map URL, and emit the same identifier during monitoring:
+
+```powershell
+docker compose --profile tools run --rm --build simulator registered-device --session <exam-session-id> --device SIM-MY-DEVICE-E2E --x 2.5 --y 4
+```
+
+The value passed to `--device` must be identical to the value used during the
+registration simulation. This command defaults to `SIM-MY-DEVICE-E2E`, runs for
+five minutes and does not stop the exam session when it exits.
+
 ### Separate professor and assistant demos
 
 ```powershell
@@ -73,6 +99,17 @@ They gradually appear and move inside separate classroom zones so their markers 
 ```powershell
 docker compose --profile tools run --rm --build simulator demo
 ```
+
+To use a session already started from the application, only pass its ID:
+
+```powershell
+docker compose --profile tools run --rm --build simulator demo --session <exam-session-id>
+```
+
+The first device in this stream is `SIM-MY-DEVICE-E2E`, the same default identifier
+used by the **Classroom map** registration simulator. It is treated as allowed only if
+it was registered before the exam session started. The other simulated devices remain
+unregistered so the same stream demonstrates both allowed and suspicious traffic.
 
 The demo console mirrors the ESP32 serial channel-hopping output (`Sniffing channel 1` through
 `Sniffing channel 13`). This is diagnostic serial output only; simulated detections are still

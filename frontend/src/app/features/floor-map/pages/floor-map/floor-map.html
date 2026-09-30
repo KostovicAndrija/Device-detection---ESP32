@@ -1,25 +1,35 @@
 <section class="page floor-page">
   @if (error()) { <p role="alert">{{error()}}</p> }
+  @if (roomStore.error()) { <p role="alert">{{roomStore.error()}}</p> }
   <header class="page-header">
-    <div><p class="eyebrow">Lokalizacija uživo</p><h2>{{ selectedClassroom().name }}</h2><p class="subtitle">Uređaji blede kada prestanu da šalju signal i ponovo se pojavljuju pri sledećoj aktivnosti.</p></div>
+    <div><p class="eyebrow">{{replayMode() ? 'Reprodukcija sesije' : 'Lokalizacija uživo'}}</p><h2>{{selectedClassroom().name}}</h2><p class="subtitle">{{selectedClassroom().width}} × {{selectedClassroom().height}} m. Uređaji blede kada prestanu da šalju signal.</p></div>
     <div class="toolbar map-toolbar">
-      <label>Učionica<select [(ngModel)]="roomId" (ngModelChange)="selectRoom()">@for (room of classrooms; track room.id) { <option [value]="room.id">{{ room.name }}</option> }</select></label>
-      <label>Istorija sesija<select [(ngModel)]="sessionId" (ngModelChange)="selectSession()"><option value="">Bez izabrane sesije</option>@for (session of sessions(); track session.id) { @if (session.roomId === roomId) { <option [value]="session.id">{{ session.name }} · {{ session.status }}</option> } }</select></label>
-      @if (selectedSession()?.status === 'active') { <button class="danger" (click)="stopReading()">Zaustavi očitavanje</button> } @else { <button (click)="startReading()" [disabled]="loading()">{{ loading() ? 'Pokrećem…' : 'Počni očitavanje' }}</button> }
-      <button (click)="load()" [disabled]="loading()">{{ loading() ? 'Osvežavam…' : 'Osveži' }}</button>
+      <label>Učionica<select [(ngModel)]="roomId" (ngModelChange)="selectRoom()">@for(room of classrooms(); track room.id){<option [value]="room.id">{{room.name}}</option>}</select></label>
+      <label>Istorija sesija<select [(ngModel)]="sessionId" (ngModelChange)="selectSession()"><option value="">Bez izabrane sesije</option>@for(session of sessions(); track session.id){@if(session.roomId===roomId){<option [value]="session.id">{{session.name}} · {{session.status==='active'?'aktivna':session.status==='completed'?'završena':'planirana'}}</option>}}</select></label>
+      @if(selectedSession()?.status==='active'){<button class="danger" (click)="stopReading()"><span class="material-symbols-outlined" aria-hidden="true">stop</span>Zaustavi očitavanje</button>}@else{<button (click)="startReading()" [disabled]="loading()"><span class="material-symbols-outlined" aria-hidden="true">play_arrow</span>Počni očitavanje</button>}
+      <button (click)="load()" [disabled]="loading()"><span class="material-symbols-outlined" aria-hidden="true">refresh</span>Osveži</button>
+      @if(sessionId){<button (click)="toggleReplay()"><span class="material-symbols-outlined" aria-hidden="true">{{replayMode()?'sensors':'history'}}</span>{{replayMode()?'Prikaz uživo':'Reprodukcija'}}</button>}
     </div>
   </header>
-  <div class="status-strip"><span class="status-pill"><i class="status-dot live-dot"></i>{{ activeCount() }} aktivno</span><span class="status-pill"><i class="status-dot fading-dot"></i>{{ fadingCount() }} nestaje</span><span class="status-pill subtle">Automatsko osvežavanje · 2 s</span></div>
-  <div class="room-shell">
-    <div class="room-label">{{ selectedClassroom().name | uppercase }} · {{ visiblePositions().length }} UREĐAJA U PROSTORU</div>
-    <div class="room">
-      <div class="blackboard"><span>Tabla</span></div><div class="teacher-desk"><span>Katedra</span></div><div class="door"><span>Izlaz</span></div><div class="windows" aria-label="Prozori"><i></i><i></i><i></i></div>
-      @if (selectedClassroom().layout === 'aisle-2-3') { <div class="center-aisle"><span>PROLAZ</span></div> }
-      @for (desk of desks(); track desk.id) { <div class="student-desk" [style.left.%]="desk.left" [style.top.%]="desk.top"><i class="computer"></i><span>{{ desk.id }}</span><i class="chair chair-center"></i></div> }
-      <div class="sensor sensor-s1"><i></i><span>S1</span><small>0, 0</small></div><div class="sensor sensor-s2"><i></i><span>S2</span><small>8, 0</small></div><div class="sensor sensor-s3"><i></i><span>S3</span><small>4, 6</small></div>
-      @for (position of visiblePositions(); track position.deviceId) { <button class="device-marker" [class.live]="presence(position) === 'live'" [class.fading]="presence(position) === 'fading'" [class.whitelisted]="position.isWhitelisted" [style.left]="left(position.x)" [style.top]="top(position.y)" [style.opacity]="opacity(position)" [attr.aria-label]="'Uređaj ' + position.deviceId" title="{{ position.isWhitelisted ? 'Whitelist uređaj' : 'Nepoznat uređaj' }} · pouzdanost {{ position.confidence * 100 | number:'1.0-0' }}% · {{ position.sensorCount }} senzora"><span class="device-pulse"></span><span class="device-icon">{{ shortId(position.deviceId) }}</span><small>{{ position.isWhitelisted ? 'DOZVOLJEN' : (position.confidence * 100 | number:'1.0-0') + '%' }}</small></button> }
-      @if (!sessionId) { <div class="empty-room">Učionica je spremna. Klikni „Počni očitavanje“.</div> } @else if (positions().length === 0 && !loading()) { <div class="empty-room">Čekam prva očitavanja senzora…</div> }
+  @if(sessionId && !hasSnapshot()){<p>Starija sesija nema sačuvan raspored. Prikazan je raspoloživi raspored učionice, koji se može razlikovati od tadašnjeg.</p>}
+  @if(selectedSession()?.status==='completed' && !observationCount()){<p>Nema sačuvanih očitavanja. Podaci starijih sesija možda su obrisani pre uvođenja istorije.</p>}
+  @if(replayMode()) {
+    <div class="toolbar replay-controls"><button (click)="play()" [disabled]="!observationCount()"><span class="material-symbols-outlined" aria-hidden="true">{{playing()?'pause':'play_arrow'}}</span>{{playing()?'Pauza':'Pusti'}}</button>
+      <label>Brzina<select [(ngModel)]="speed"><option [ngValue]="1">1×</option><option [ngValue]="2">2×</option><option [ngValue]="5">5×</option><option [ngValue]="10">10×</option></select></label>
+      <input aria-label="Vreme reprodukcije" type="range" [min]="firstAt()" [max]="lastAt()" [step]="1" [ngModel]="replayAt()" (ngModelChange)="seek($event)" />
+      <span>{{replayAt() | date:'dd.MM.yyyy HH:mm:ss'}} · {{observationCount()}} očitavanja</span>
+    </div><p>Reprodukcija računa položaje iz sačuvanih očitavanja. Ne šalje nove signale i ne stvara alarme.</p>
+  }
+  <div class="status-strip"><span class="status-pill"><i class="status-dot live-dot"></i>{{activeCount()}} aktivno</span><span class="status-pill"><i class="status-dot fading-dot"></i>{{fadingCount()}} nestaje</span><span class="status-pill subtle">{{replayMode()?'Istorijski prikaz':'Automatsko osvežavanje · 2 s'}}</span></div>
+  <section class="room-shell" [class.expanded]="mapExpanded()" aria-label="Plan učionice">
+    <div class="room-label"><span>{{selectedClassroom().name | uppercase}} · {{visiblePositions().length}} UREĐAJA U PROSTORU</span><button type="button" class="map-size-button" (click)="toggleMapSize()" [attr.aria-pressed]="mapExpanded()" [attr.title]="mapExpanded()?'Smanji prikaz mape':'Uvećaj prikaz mape'"><span class="material-symbols-outlined" aria-hidden="true">{{mapExpanded()?'close_fullscreen':'open_in_full'}}</span>{{mapExpanded()?'Smanji mapu':'Uvećaj mapu'}}</button></div>
+    <div class="drawing-area">
+      <div class="width-label">{{selectedClassroom().width | number:'1.0-4'}} m</div>
+      <app-room-map [room]="selectedClassroom()" [positions]="visiblePositions()" [viewTime]="viewTime()" [fadeDevices]="true" [expanded]="mapExpanded()"/>
+      <span class="height-label">{{selectedClassroom().height | number:'1.0-4'}} m</span>
+      @if(!sessionId){<div class="empty-room">Učionica je spremna. Klikni „Počni očitavanje”.</div>}@else if(!positions().length && !loading()){<div class="empty-room">{{replayMode()?'Nema očitavanja u ovom trenutku.':'Čekam očitavanja senzora…'}}</div>}
     </div>
-  </div>
-  <div class="map-legend"><span><i class="legend-device"></i> Nepoznat uređaj</span><span><i class="legend-allowed"></i> Whitelist uređaj</span><span><i class="legend-sensor"></i> ESP32 senzor</span><span><i class="legend-desk"></i> Računar</span><span class="last-update">@if (lastRefresh()) { Poslednje osvežavanje: {{ lastRefresh()!.toLocaleTimeString() }} }</span></div>
+  </section>
+  <div class="map-legend"><span><i class="legend-device"></i>Nepoznat uređaj</span><span><i class="legend-allowed"></i>Dozvoljen uređaj</span><span><i class="legend-sensor"></i>Senzor</span><span><i class="legend-desk"></i>Računar</span><span class="last-update">@if(lastRefresh()){Poslednje osvežavanje: {{lastRefresh()!.toLocaleTimeString()}}}</span></div>
+  <app-device-registration [roomId]="roomId" [monitoringActive]="selectedSession()?.status==='active'"/>
 </section>

@@ -1,0 +1,31 @@
+:host { display: block; min-width: 0; }
+.floor-plan { display: block; height: min(69vh, 790px); min-height: 400px; overflow: visible; width: 100%; }
+.floor-plan.compact { height: min(55vh, 430px); min-height: 280px; }
+.floor-plan.expanded { height: calc(100vh - 96px); min-height: 0; }
+.room-boundary { fill: #f8fafc; stroke: #64748b; stroke-width: .055; }
+.board-shape rect { fill: #24483f; stroke: #102e27; stroke-width: .025; }
+.board-shape text { fill: #24483f; font-weight: 800; }
+.desk-shape > rect:first-of-type { fill: #e8d5b5; stroke: #a9834c; stroke-width: .018; }
+.desk-shape.teacher-desk > rect:first-of-type { fill: #d6b98c; stroke: #8b6535; }
+.desk-shape.editable, .sensor-shape.editable { cursor: pointer; outline: none; }
+.desk-shape.editable:hover > rect:first-of-type, .desk-shape.editable:focus-visible > rect:first-of-type { stroke: #2563eb; stroke-width: .04; }
+.computer-screen { fill: #334155; stroke: #0f172a; stroke-width: .012; }
+.computer-label { fill: #f8fafc; font-weight: 800; pointer-events: none; }
+.computer-stand { stroke: #334155; stroke-width: .025; }
+.desk-label { fill: #654b25; font-weight: 600; pointer-events: none; }
+.sensor-shape line { stroke: #0d9488; stroke-width: .015; }
+.sensor-shape circle { fill: #0d9488; }
+.sensor-shape rect { fill: #0f766e; }
+.sensor-shape text { fill: white; font-weight: 800; }
+.sensor-shape.editable:hover rect, .sensor-shape.editable:focus-visible rect { fill: #2563eb; }
+.device-marker { pointer-events: none; transition: opacity 1s linear; }
+.device-dot { fill: #dc2626; stroke: white; stroke-width: .045; filter: drop-shadow(0 .06px .1px #991b1b88); }
+.device-icon { fill: white; font-family: 'Material Symbols Outlined'; font-weight: 400; }
+.device-label { fill: #172033; font-weight: 800; paint-order: stroke; stroke: white; stroke-linejoin: round; stroke-width: .09; }
+.device-pulse { fill: none; opacity: 0; stroke: #ef4444; stroke-width: .025; }
+.device-marker.live .device-pulse { animation: pulse 2s infinite; }
+.device-marker.fading .device-dot { filter: grayscale(.45); }
+.device-marker.whitelisted .device-dot { fill: #16a34a; filter: drop-shadow(0 .06px .1px #16653488); }
+.device-marker.whitelisted .device-pulse { stroke: #22c55e; }
+@keyframes pulse { 0% { opacity: .8; r: .22; } 80%, 100% { opacity: 0; r: .38; } }
+@media (max-width: 760px) { .floor-plan { height: 60vh; min-height: 350px; } .floor-plan.compact { min-height: 260px; } }

@@ -2,6 +2,7 @@ using Api.Controllers;
 using Api.Monitoring;
 using Application.Abstractions.Security;
 using Application.Ingestion;
+using Application.Localization;
 using Application.Risk;
 using Application.Sessions;
 using Domain.Entities;
@@ -21,9 +22,9 @@ namespace IntegrationTests;
 public sealed class AssistantRegistrationTests
 {
     private sealed record Actor(Guid? Id, bool IsProfessor = false, bool IsAssistant = true) : ICurrentUser;
-    private static AppDbContext Database() => new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-    private static StaffController Controller(AppDbContext db, AppUser user) => new(db, new Actor(user.Id), new PasswordHasher<AppUser>());
-    private static ExamSessionService Sessions(AppDbContext db, AppUser user) => new(new ExamSessionRepository(db), new AppUnitOfWork(db), new NoopMonitoringEventPublisher(), new SessionAccess(db, new Actor(user.Id)));
+    private static AppDbContext Database() { var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options); db.Database.EnsureCreated(); return db; }
+    private static StaffController Controller(AppDbContext db, AppUser user) => new(db, new Actor(user.Id), new PasswordHasher<AppUser>(), new RoomLayoutProvider(db));
+    private static ExamSessionService Sessions(AppDbContext db, AppUser user) => new(new ExamSessionRepository(db), new AppUnitOfWork(db), new NoopMonitoringEventPublisher(), new SessionAccess(db, new Actor(user.Id)), new RoomLayoutProvider(db));
     private static LoggingRssiProcessingPipeline Pipeline(AppDbContext db) => new(NullLogger<LoggingRssiProcessingPipeline>.Instance,
         new DeviceRepository(db), new ObservationRepository(db), new WhitelistRepository(db), new AlertRepository(db), new AppUnitOfWork(db),
         new Sha256DeviceHashingService(Options.Create(new HashingOptions())), new RiskScoringService(), new NoopMonitoringEventPublisher(), db);
@@ -38,9 +39,17 @@ public sealed class AssistantRegistrationTests
         var result = Assert.IsType<OkObjectResult>(await controller.StartScan(new("UC-101"), default));
         var scan = Assert.IsType<ExamSession>(result.Value);
         var pipeline = Pipeline(db);
-        await pipeline.ProcessAsync(new("my-device", "S1", scan.Id.ToString(), "ble-pair", -10, DateTimeOffset.UtcNow));
+        var capturedAt = DateTimeOffset.UtcNow;
+        await pipeline.ProcessAsync(new("my-device", "S1", scan.Id.ToString(), "ble-pair", -55, capturedAt));
+        await pipeline.ProcessAsync(new("my-device", "S2", scan.Id.ToString(), "ble-pair", -60, capturedAt));
+        await pipeline.ProcessAsync(new("my-device", "S3", scan.Id.ToString(), "ble-pair", -58, capturedAt));
         Assert.Empty(await db.Alerts.ToListAsync());
         var own = await db.Devices.SingleAsync();
+        var positions = await new PositionQueryService(
+            new ObservationRepository(db), new DeviceRepository(db), new WhitelistRepository(db),
+            new RssiPositionEstimator(new LocalizationService()), new RoomLayoutProvider(db),
+            Options.Create(new LocalizationOptions())).GetBySessionAsync(scan.Id.ToString());
+        Assert.Equal(3, Assert.Single(positions).SensorCount);
         await controller.Confirm(scan.Id, new([new(own.Id, "Moj telefon")]), default);
         var session = await Sessions(db, user).StartForRoomAsync(new("UC-101"));
         var entry = await db.WhitelistEntries.SingleAsync();
@@ -80,6 +89,24 @@ public sealed class AssistantRegistrationTests
         await Pipeline(db).ProcessAsync(new("late", "S1", scan.Id.ToString(), "wifi", -10, DateTimeOffset.UtcNow));
         Assert.Empty(await db.DeviceObservations.ToListAsync());
         Assert.False(await new ExamSessionRepository(db).HasActiveSessionInRoomAsync("UC-101", Guid.Empty));
+    }
+
+    [Fact]
+    public async Task Deleted_or_unknown_session_ignores_late_sensor_readings()
+    {
+        await using var db = Database();
+
+        await Pipeline(db).ProcessAsync(new(
+            "late-device",
+            "S1",
+            Guid.NewGuid().ToString(),
+            "wifi",
+            -20,
+            DateTimeOffset.UtcNow));
+
+        Assert.Empty(await db.Devices.ToListAsync());
+        Assert.Empty(await db.DeviceObservations.ToListAsync());
+        Assert.Empty(await db.Alerts.ToListAsync());
     }
 
     [Fact]

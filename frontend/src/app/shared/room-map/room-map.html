@@ -1,0 +1,47 @@
+<svg class="floor-plan" [class.compact]="compact" [class.expanded]="expanded"
+  [attr.viewBox]="'-.45 -.35 '+(room.width+.9)+' '+(room.height+.7)" role="group" [attr.aria-label]="'Plan: '+room.name">
+  <defs><pattern id="shared-room-grid" width=".5" height=".5" patternUnits="userSpaceOnUse"><path d="M .5 0 H 0 V .5" fill="none" stroke="#dce5ed" stroke-width=".008"/></pattern></defs>
+  <rect class="room-boundary" x="0" y="0" [attr.width]="room.width" [attr.height]="room.height"/>
+  <rect x="0" y="0" [attr.width]="room.width" [attr.height]="room.height" fill="url(#shared-room-grid)"/>
+
+  @for(board of boards(); track board.id) {
+    <g class="board-shape"><title>{{board.id}} · tabla</title><rect [attr.x]="board.x-board.width/2" [attr.y]="board.y-board.height/2" [attr.width]="board.width" [attr.height]="board.height" rx=".025"/><text [attr.x]="board.x" [attr.y]="board.y+fontSize()*.95" text-anchor="middle" [attr.font-size]="fontSize()*.8">TABLA</text></g>
+  }
+
+  @for(desk of room.computers; track desk.id; let deskIndex=$index) {
+    <g class="desk-shape" [class.teacher-desk]="desk.isTeacherDesk" [class.editable]="editable"
+      [attr.role]="editable?'button':'img'" [attr.tabindex]="editable?0:null"
+      [attr.aria-label]="(desk.isTeacherDesk?'Katedra ':desk.kind==='desk'?'Klupa ':'Računar ')+desk.id+(editable?', izmeni':'')"
+      (click)="selectDesk(deskIndex)" (keydown.enter)="selectDesk(deskIndex)" (keydown.space)="$event.preventDefault();selectDesk(deskIndex)">
+      <title>{{desk.id}} · {{deskWidth(desk) | number:'1.0-3'}} × {{deskHeight(desk) | number:'1.0-3'}} m · centar ({{desk.x}}, {{desk.y}})</title>
+      <rect [attr.x]="desk.x-deskWidth(desk)/2" [attr.y]="desk.y-deskHeight(desk)/2" [attr.width]="deskWidth(desk)" [attr.height]="deskHeight(desk)" rx=".035"/>
+      @for(slot of computerSlots(desk); track $index; let slotIndex=$index) {
+        <g class="computer"><title>{{computerLabel(deskIndex,slotIndex)}}</title><rect class="computer-screen" [attr.x]="desk.x+slot.offset-slot.width/2" [attr.y]="desk.y-deskHeight(desk)*.38" [attr.width]="slot.width" [attr.height]="deskHeight(desk)*.3" rx=".018"/><text class="computer-label" [attr.x]="desk.x+slot.offset" [attr.y]="desk.y-deskHeight(desk)*.23" text-anchor="middle" dominant-baseline="central" [attr.font-size]="slot.width*.2">{{computerLabel(deskIndex,slotIndex)}}</text><line class="computer-stand" [attr.x1]="desk.x+slot.offset" [attr.x2]="desk.x+slot.offset" [attr.y1]="desk.y-deskHeight(desk)*.08" [attr.y2]="desk.y+deskHeight(desk)*.02"/></g>
+      }
+      <text class="desk-label" [attr.x]="desk.x" [attr.y]="desk.y+((desk.computerCount??0)>0?deskHeight(desk)*.2:0)" text-anchor="middle" dominant-baseline="central" [attr.font-size]="fontSize()">{{desk.isTeacherDesk?'Katedra':desk.id}}</text>
+    </g>
+  }
+
+  @for(sensor of room.sensors; track sensor.id; let sensorIndex=$index) {
+    <g class="sensor-shape" [class.editable]="editable" [attr.role]="editable?'button':'img'" [attr.tabindex]="editable?0:null"
+      [attr.aria-label]="'Senzor '+sensor.id+(editable?', izmeni':'')" (click)="selectSensor(sensorIndex)"
+      (keydown.enter)="selectSensor(sensorIndex)" (keydown.space)="$event.preventDefault();selectSensor(sensorIndex)">
+      <title>{{sensor.id}} · {{sensor.model}} · ({{sensor.x}}, {{sensor.y}}) m</title>
+      <line [attr.x1]="sensor.x" [attr.y1]="sensor.y" [attr.x2]="sensorX(sensor.x)" [attr.y2]="sensorY(sensor.y)"/>
+      <circle [attr.cx]="sensor.x" [attr.cy]="sensor.y" [attr.r]="fontSize()*.45"/>
+      <rect [attr.x]="sensorX(sensor.x)-fontSize()*1.7" [attr.y]="sensorY(sensor.y)-fontSize()*.8" [attr.width]="fontSize()*3.4" [attr.height]="fontSize()*1.6" rx=".05"/>
+      <text [attr.x]="sensorX(sensor.x)" [attr.y]="sensorY(sensor.y)" text-anchor="middle" dominant-baseline="central" [attr.font-size]="fontSize()">{{sensor.id}}</text>
+    </g>
+  }
+
+  @for(position of positions; track position.deviceId) {
+    <g class="device-marker" [class.live]="presence(position)==='live'" [class.fading]="presence(position)==='fading'"
+      [class.whitelisted]="position.isWhitelisted" [attr.transform]="'translate('+position.x+' '+position.y+')'"
+      [style.opacity]="opacity(position)" [attr.aria-label]="signalLabel(position.signalType)+' uređaj '+shortId(position.deviceId)">
+      <title>{{shortId(position.deviceId)}} · {{signalLabel(position.signalType)}} · {{position.isWhitelisted?'Dozvoljen uređaj':'Nepoznat uređaj'}} · pouzdanost {{position.confidence*100 | number:'1.0-0'}}% · {{position.sensorCount}} senzora</title>
+      <circle class="device-pulse" r=".28"/><circle class="device-dot" r=".2"/>
+      <text class="device-icon material-symbols-outlined" y=".012" text-anchor="middle" dominant-baseline="central" [style.font-size]="(fontSize()*1.1)+'px'">{{signalIcon(position.signalType)}}</text>
+      <text class="device-label" y=".39" text-anchor="middle" [attr.font-size]="fontSize()*.72">{{shortId(position.deviceId)}} · {{position.isWhitelisted?'DOZVOLJEN':(position.confidence*100 | number:'1.0-0')+'%'}}</text>
+    </g>
+  }
+</svg>

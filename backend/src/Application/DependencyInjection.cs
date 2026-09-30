@@ -15,8 +15,10 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<IRssiIngestionService, RssiIngestionService>();
+        services.AddScoped<ISensorMessageDecoder, JsonSensorMessageDecoder>();
         services.AddScoped<IRiskScoringService, RiskScoringService>();
         services.AddScoped<ILocalizationService, LocalizationService>();
+        services.AddScoped<IPositionEstimator, RssiPositionEstimator>();
         services.AddScoped<IPositionQueryService, PositionQueryService>();
         services.AddSingleton<IPositionSmoother, KalmanPositionSmoother>();
         services.AddOptions<LocalizationOptions>();

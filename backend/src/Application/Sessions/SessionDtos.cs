@@ -5,3 +5,5 @@ public sealed record CreateSessionRequest(string Name, string RoomId, DateTimeOf
 public sealed record StartRoomSessionRequest(string RoomId, string? Name = null);
 
 public sealed record SessionDto(Guid Id, string Name, string RoomId, DateTimeOffset StartsAt, DateTimeOffset? EndsAt, string Status);
+
+public sealed record StopSessionResult(SessionDto? Session, bool Deleted);

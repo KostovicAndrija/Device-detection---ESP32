@@ -4,3 +4,7 @@
 **/dist
 **/.vs
 .git
+**/.angular
+.tmp_doc_tools
+.docker-build-review.log
+.env

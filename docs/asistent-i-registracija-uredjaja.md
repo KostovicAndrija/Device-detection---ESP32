@@ -1,12 +1,12 @@
 # Asistent i registracija ličnih uređaja
 
-Korisničke uloge su `Professor` i `Assistant`. `Worker` je tehnička uloga za slanje događaja iz servisa za obradu očitavanja. Profesor kreira nalog asistenta na stranici „Moji uređaji”. Lozinka novog naloga mora imati najmanje 12 znakova.
+Korisničke uloge su `Professor` i `Assistant`. `Worker` je tehnička uloga za slanje događaja iz servisa za obradu očitavanja. Profesor kreira nalog asistenta na stranici „Asistenti”. Lozinka novog naloga mora imati najmanje 12 znakova.
 
 Profesor vidi sve sesije, upravlja praćenjem, alarmima, izveštajima i ručnom listom dozvoljenih uređaja. Asistent samostalno kreira, pokreće i zaustavlja svoje sesije, vidi njihove uređaje, pozicije, alarme i izveštaje i potvrđuje njihove alarme. Ne menja ručnu listu dozvoljenih uređaja i nema pristup tuđim sesijama. Stare sesije bez vlasnika dostupne su profesoru.
 
 ## Postupak
 
-1. Asistent otvara „Moji uređaji”, bira slobodnu učionicu i pokreće registraciono skeniranje dok je sam.
+1. Asistent otvara „Mapa učionice”, bira slobodnu učionicu i pokreće registraciono skeniranje dok je sam.
 2. Senzori šalju očitavanja sa identifikatorom te registracione sesije. Prikupljanje traje najviše dva minuta. Tokom registracije nema alarma.
 3. Asistent bira pronađene uređaje koji su njegovi i upisuje nazive. Za lakše prepoznavanje može registrovati jedan po jedan uređaj. Samo prisustvo u praznoj učionici nije dokaz vlasništva. Uređaji se ne prisvajaju automatski na osnovu jačine signala.
 4. Potvrda završava skeniranje. Izbor se može potvrditi još deset minuta nakon isteka prikupljanja. Nepotvrđeni kandidati nisu na listi dozvoljenih uređaja. Posle napuštanja stranice aktuelno skeniranje se ponovo prikazuje pri povratku.

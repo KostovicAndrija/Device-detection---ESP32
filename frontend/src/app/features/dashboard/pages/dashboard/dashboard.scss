@@ -11,4 +11,5 @@
 .clickable-row { cursor: pointer; }
 .clickable-row:hover { background: #f8fafc; }
 .table-hint { margin-top: -.35rem; }
+.session-actions { display: flex; flex-wrap: wrap; gap: .45rem; }
 @media (max-width: 700px) { .section-heading { align-items: start; flex-direction: column; } }

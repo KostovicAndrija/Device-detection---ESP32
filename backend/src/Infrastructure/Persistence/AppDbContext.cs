@@ -14,9 +14,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<StaffDevice> StaffDevices => Set<StaffDevice>();
+    public DbSet<Classroom> Classrooms => Set<Classroom>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Classroom>(entity => {
+            entity.ToTable("classrooms"); entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasMaxLength(64);
+            entity.Property(x => x.LayoutJson).IsRequired();
+            entity.Property(x => x.Revision).IsConcurrencyToken();
+            entity.HasData(Classroom.Defaults());
+        });
         modelBuilder.Entity<Device>(entity =>
         {
             entity.ToTable("devices");
@@ -56,6 +64,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(32).IsRequired();
             entity.Property(x => x.OwnerUserId).HasColumnName("owner_user_id");
             entity.Property(x => x.RegistrationExpiresAt).HasColumnName("registration_expires_at");
+            entity.Property(x => x.RoomSnapshotJson).HasColumnName("room_snapshot_json");
             entity.HasOne<AppUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Restrict);
         });
 

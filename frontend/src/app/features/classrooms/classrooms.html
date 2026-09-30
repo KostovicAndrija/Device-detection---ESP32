@@ -1,0 +1,53 @@
+<section class="page classroom-page">
+  <header class="page-header"><div><p class="eyebrow">Prostor i oprema</p><h2>Učionice</h2><p class="muted">Raspored na jednom mestu. Izaberi klupu ili senzor da izmeniš njegove podatke.</p></div>
+    @if(auth.isProfessor()){<button class="add-button" (click)="openRoom(true)"><span class="material-symbols-outlined" aria-hidden="true">add</span>Nova učionica</button>}
+  </header>
+  @if(rooms.error()){<p role="alert" class="error">{{rooms.error()}}</p>}
+  @if(message()){<p role="status" class="notice">{{message()}}</p>}
+  <nav class="room-tabs" aria-label="Izbor učionice">@for(room of rooms.items();track room.id){<button class="room-tab" [class.selected]="draft?.id===room.id" [attr.aria-pressed]="draft?.id===room.id" (click)="edit(room)">{{room.name}}</button>}</nav>
+  @if(draft;as room){
+    <div class="workspace">
+      <section class="plan-panel" aria-label="Raspored učionice">
+        <header class="plan-header"><div><h3>{{room.name}}</h3><span class="muted">{{room.width | number:'1.0-4'}} × {{room.height | number:'1.0-4'}} m · {{room.computers.length}} klupa / računara · {{room.sensors.length}} senzora</span></div>
+          @if(auth.isProfessor()){<button class="quiet" (click)="openRoom()"><span class="material-symbols-outlined" aria-hidden="true">edit</span>Dimenzije i podaci</button>}
+        </header>
+        <div class="drawing-area">
+          <div class="width-label">{{room.width | number:'1.0-4'}} m</div>
+          <app-room-map [room]="room" [editable]="auth.isProfessor()" (deskSelected)="openItem('desk',$event)" (sensorSelected)="openItem('sensor',$event)"/>
+          <span class="height-label">{{room.height | number:'1.0-4'}} m</span>
+          @if(!room.computers.length){<p class="empty-hint">Dodaj prvu klupu ili računar da formiraš raspored.</p>}
+        </div>
+        <footer class="plan-legend"><span><i class="desk-key"></i>Klupa / računar</span><span><i class="sensor-key"></i>Senzor</span><span>Mreža: 0,5 m</span></footer>
+      </section>
+      <aside class="equipment-panel">
+        <h3>Uredi raspored</h3><p class="muted">Sve koordinate su u metrima, od gornjeg levog ugla. Za klupe označavaju centar.</p>
+        @if(auth.isProfessor()){<div class="add-actions"><button class="add-button" (click)="openItem('desk')"><span class="material-symbols-outlined" aria-hidden="true">add</span>Dodaj klupu / računar</button><button class="add-button" (click)="openItem('sensor')"><span class="material-symbols-outlined" aria-hidden="true">add</span>Dodaj senzor</button></div>}
+        <details open><summary>Klupe i računari <span>{{room.computers.length}}</span></summary><div class="equipment-list">@for(pc of room.computers;track $index;let i=$index){<button class="equipment-row" [disabled]="!auth.isProfessor()" (click)="openItem('desk',i)"><strong>{{pc.isTeacherDesk?'Katedra':pc.id}}</strong><small>{{pc.isTeacherDesk?'Nastavnički sto':pc.kind==='desk'?'Klupa':'Računar'}} · {{pc.computerCount??0}} računara · {{deskWidth(pc) | number:'1.0-2'}} × {{deskHeight(pc) | number:'1.0-2'}} m</small></button>}@empty{<p class="muted">Nema dodate opreme.</p>}</div></details>
+        <details open><summary>Senzori <span>{{room.sensors.length}}</span></summary><div class="equipment-list">@for(s of room.sensors;track $index;let i=$index){<button class="equipment-row" [disabled]="!auth.isProfessor()" (click)="openItem('sensor',i)"><strong>{{s.id}}</strong><small>{{s.model}} · ({{s.x}}, {{s.y}}) m</small></button>}</div></details>
+        @if(room.sensors.length<3){<p class="hint">Za procenu položaja postavi najmanje tri senzora koji nisu na istoj pravoj.</p>}
+        <p class="hint">Izmene važe za naredne sesije. Prethodne sesije zadržavaju svoj raspored.</p>
+      </aside>
+    </div>
+  }@else{<div class="panel empty-state">Izaberi učionicu ili dodaj novu da počneš sa uređivanjem rasporeda.</div>}
+</section>
+<dialog #editor (cancel)="cancel($event)" aria-labelledby="editor-title">
+  <form #editorForm="ngForm" (ngSubmit)="submit()">
+    <header class="dialog-header"><h2 id="editor-title">{{mode==='room'?(creatingRoom?'Nova učionica':'Podaci o učionici'):mode==='desk'?(itemIndex<0?'Dodaj klupu / računar':'Izmeni klupu / računar'):(itemIndex<0?'Dodaj senzor':'Izmeni senzor')}}</h2><button type="button" class="quiet close icon-only" aria-label="Zatvori dijalog" title="Zatvori" [disabled]="busy()" (click)="close()"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></header>
+    @if(error()){<p class="error" role="alert">{{error()}}</p>}
+    <fieldset [disabled]="busy()">
+    @if(mode==='room'){
+      <div class="form-grid"><label>Oznaka<input name="id" [(ngModel)]="roomForm.id" [readOnly]="!creatingRoom" required maxlength="64"/></label><label>Naziv<input name="name" [(ngModel)]="roomForm.name" required maxlength="200"/></label><label>Širina (m)<input name="width" type="number" [(ngModel)]="roomForm.width" min="0.1" max="1000" step="any" required/></label><label>Dužina (m)<input name="height" type="number" [(ngModel)]="roomForm.height" min="0.1" max="1000" step="any" required/></label><label class="full">Opis<textarea name="description" [(ngModel)]="roomForm.description" maxlength="1000" rows="3"></textarea></label></div>
+      <p class="hint">Klupe i senzore dodaješ na raspored nakon čuvanja učionice.</p>
+    }@else{
+      <div class="form-grid"><label>Oznaka<input name="item-id" [(ngModel)]="item.id" maxlength="64" required/></label>
+      @if(mode==='desk'){<label>Vrsta<select name="kind" [(ngModel)]="item.kind"><option value="desk">Klupa</option><option value="computer">Računar na klupi</option></select></label>}
+      @else{<label>Model<input name="model" [(ngModel)]="item.model" maxlength="100" required/></label>}
+      <label>X (m)<input name="x" type="number" [(ngModel)]="item.x" min="0" [max]="draft!.width" step="any" required/></label><label>Y (m)<input name="y" type="number" [(ngModel)]="item.y" min="0" [max]="draft!.height" step="any" required/></label>
+      @if(mode==='desk'){<label>Širina klupe (m)<input name="desk-width" type="number" [(ngModel)]="item.width" min="0.01" [max]="draft!.width" step="any" required/></label><label>Dubina klupe (m)<input name="desk-height" type="number" [(ngModel)]="item.height" min="0.01" [max]="draft!.height" step="any" required/></label><label>Broj računara<input name="computer-count" type="number" [(ngModel)]="item.computerCount" min="0" max="20" step="1" required/></label><label class="check-field"><input name="teacher-desk" type="checkbox" [(ngModel)]="item.isTeacherDesk"/>Katedra</label>}
+      @else{<label>RSSI na 1 m<input name="rssi" type="number" [(ngModel)]="item.referenceRssi" min="-120" max="0" step="any" required/></label><label>Eksponent slabljenja<input name="loss" type="number" [(ngModel)]="item.pathLossExponent" min="0.1" max="10" step="any" required/></label>}
+      </div><p class="hint">{{mode==='desk'?'X i Y označavaju centar klupe. Računari se automatski ravnomerno raspoređuju prema širini klupe, sa jednakim razmakom između njih i do krajeva.':'Oznaka senzora mora odgovarati oznaci koju šalje fizički uređaj.'}}</p>
+    }
+    </fieldset>
+    <footer class="dialog-actions">@if(mode!=='room'&&itemIndex>=0){<button type="button" class="remove" [disabled]="busy()" (click)="remove()"><span class="material-symbols-outlined" aria-hidden="true">delete</span>Ukloni {{mode==='desk'?'klupu / računar':'senzor'}}</button>}<button type="button" class="quiet" [disabled]="busy()" (click)="close()"><span class="material-symbols-outlined" aria-hidden="true">close</span>Odustani</button><button type="submit" [class.add-button]="mode==='room'?creatingRoom:itemIndex<0" [disabled]="busy()||editorForm.invalid"><span class="material-symbols-outlined" aria-hidden="true">{{(mode==='room'?creatingRoom:itemIndex<0)?'add':'save'}}</span>{{busy()?'Čuvanje…':(mode==='room'?creatingRoom:itemIndex<0)?'Dodaj':'Sačuvaj izmene'}}</button></footer>
+  </form>
+</dialog>
