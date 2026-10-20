@@ -10,23 +10,25 @@
 
   @for(desk of room.computers; track desk.id; let deskIndex=$index) {
     <g class="desk-shape" [class.teacher-desk]="desk.isTeacherDesk" [class.editable]="editable"
+      [class.risk-warning]="deskRisk(desk.id)?.level==='warning'" [class.risk-critical]="deskRisk(desk.id)?.level==='critical'"
       [attr.role]="editable?'button':'img'" [attr.tabindex]="editable?0:null"
       [attr.aria-label]="(desk.isTeacherDesk?'Katedra ':desk.kind==='desk'?'Klupa ':'Računar ')+desk.id+(editable?', izmeni':'')"
       (click)="selectDesk(deskIndex)" (keydown.enter)="selectDesk(deskIndex)" (keydown.space)="$event.preventDefault();selectDesk(deskIndex)">
-      <title>{{desk.id}} · {{deskWidth(desk) | number:'1.0-3'}} × {{deskHeight(desk) | number:'1.0-3'}} m · centar ({{desk.x}}, {{desk.y}})</title>
+      <title>{{deskTitle(desk)}}</title>
       <rect [attr.x]="desk.x-deskWidth(desk)/2" [attr.y]="desk.y-deskHeight(desk)/2" [attr.width]="deskWidth(desk)" [attr.height]="deskHeight(desk)" rx=".035"/>
       @for(slot of computerSlots(desk); track $index; let slotIndex=$index) {
         <g class="computer"><title>{{computerLabel(deskIndex,slotIndex)}}</title><rect class="computer-screen" [attr.x]="desk.x+slot.offset-slot.width/2" [attr.y]="desk.y-deskHeight(desk)*.38" [attr.width]="slot.width" [attr.height]="deskHeight(desk)*.3" rx=".018"/><text class="computer-label" [attr.x]="desk.x+slot.offset" [attr.y]="desk.y-deskHeight(desk)*.23" text-anchor="middle" dominant-baseline="central" [attr.font-size]="slot.width*.2">{{computerLabel(deskIndex,slotIndex)}}</text><line class="computer-stand" [attr.x1]="desk.x+slot.offset" [attr.x2]="desk.x+slot.offset" [attr.y1]="desk.y-deskHeight(desk)*.08" [attr.y2]="desk.y+deskHeight(desk)*.02"/></g>
       }
       <text class="desk-label" [attr.x]="desk.x" [attr.y]="desk.y+((desk.computerCount??0)>0?deskHeight(desk)*.2:0)" text-anchor="middle" dominant-baseline="central" [attr.font-size]="fontSize()">{{desk.isTeacherDesk?'Katedra':desk.id}}</text>
+      @if(deskRisk(desk.id); as risk){@if(risk.level!=='normal'){<g class="risk-badge" [attr.transform]="'translate('+(desk.x+deskWidth(desk)/2-.12)+' '+(desk.y-deskHeight(desk)/2+.08)+')'"><circle r=".23"/><text text-anchor="middle" dominant-baseline="central" [attr.font-size]="fontSize()*.78">{{risk.score}}</text></g>}}
     </g>
   }
 
   @for(sensor of room.sensors; track sensor.id; let sensorIndex=$index) {
-    <g class="sensor-shape" [class.editable]="editable" [attr.role]="editable?'button':'img'" [attr.tabindex]="editable?0:null"
+    <g class="sensor-shape" [class.editable]="editable" [class.online]="sensorState(sensor.id)==='online'" [class.stale]="sensorState(sensor.id)==='stale'" [class.offline]="sensorState(sensor.id)==='offline'" [attr.role]="editable?'button':'img'" [attr.tabindex]="editable?0:null"
       [attr.aria-label]="'Senzor '+sensor.id+(editable?', izmeni':'')" (click)="selectSensor(sensorIndex)"
       (keydown.enter)="selectSensor(sensorIndex)" (keydown.space)="$event.preventDefault();selectSensor(sensorIndex)">
-      <title>{{sensor.id}} · {{sensor.model}} · ({{sensor.x}}, {{sensor.y}}) m</title>
+      <title>{{sensorTitle(sensor.id,sensor.model)}}</title>
       <line [attr.x1]="sensor.x" [attr.y1]="sensor.y" [attr.x2]="sensorX(sensor.x)" [attr.y2]="sensorY(sensor.y)"/>
       <circle [attr.cx]="sensor.x" [attr.cy]="sensor.y" [attr.r]="fontSize()*.45"/>
       <rect [attr.x]="sensorX(sensor.x)-fontSize()*1.7" [attr.y]="sensorY(sensor.y)-fontSize()*.8" [attr.width]="fontSize()*3.4" [attr.height]="fontSize()*1.6" rx=".05"/>
@@ -39,9 +41,10 @@
       [class.whitelisted]="position.isWhitelisted" [attr.transform]="'translate('+position.x+' '+position.y+')'"
       [style.opacity]="opacity(position)" [attr.aria-label]="signalLabel(position.signalType)+' uređaj '+shortId(position.deviceId)">
       <title>{{shortId(position.deviceId)}} · {{signalLabel(position.signalType)}} · {{position.isWhitelisted?'Dozvoljen uređaj':'Nepoznat uređaj'}} · pouzdanost {{position.confidence*100 | number:'1.0-0'}}% · {{position.sensorCount}} senzora</title>
-      <circle class="device-pulse" r=".28"/><circle class="device-dot" r=".2"/>
+      <circle class="device-pulse" r=".34"/><circle class="device-dot" r=".28"/>
       <text class="device-icon material-symbols-outlined" y=".012" text-anchor="middle" dominant-baseline="central" [style.font-size]="(fontSize()*1.1)+'px'">{{signalIcon(position.signalType)}}</text>
-      <text class="device-label" y=".39" text-anchor="middle" [attr.font-size]="fontSize()*.72">{{shortId(position.deviceId)}} · {{position.isWhitelisted?'DOZVOLJEN':(position.confidence*100 | number:'1.0-0')+'%'}}</text>
+      <rect class="device-label-bg" x="-.72" y=".33" width="1.44" height=".34" rx=".12"/>
+      <text class="device-label" y=".51" text-anchor="middle" [attr.font-size]="fontSize()*.76">{{position.isWhitelisted?'DOZVOLJEN':'NEPOZNAT'}} · {{position.confidence*100 | number:'1.0-0'}}%</text>
     </g>
   }
 </svg>

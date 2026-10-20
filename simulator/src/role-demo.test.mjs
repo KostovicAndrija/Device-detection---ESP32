@@ -14,7 +14,7 @@ function fixture(role = 'Assistant', registered = false, candidates = [{ id: 'de
     if (path === '/api/sessions/start-for-room') return { id: 'session', roomId: options.body.roomId, status: 'active' };
   };
   return { calls, options: { role, api, login: async username => username ? 'assistant-token' : 'professor-token',
-    publishDevice: async () => {}, sleep: async () => {}, roomId: 'UC-202',
+    publishDevice: async () => {}, publishSensors: async () => {}, sleep: async () => {}, roomId: 'UC-202',
     assistantUsername: 'assistant', assistantPassword: 'long-demo-password' } };
 }
 

@@ -54,6 +54,35 @@ function publish(client, sensorId, payload, qos = 1) {
   });
 }
 
+function publishSensorStatus(client, sensorId, classroomId) {
+  return new Promise((resolve, reject) => {
+    const topic = `sensors/${sensorId}/status`;
+    client.publish(topic, JSON.stringify({ sensorId, classroomId, timestamp: iso(), firmwareVersion: 'simulator-1.0', isSimulated: true }),
+      { qos: 1, retain: true }, error => error ? reject(error) : resolve());
+  });
+}
+
+async function sensorHeartbeats(client, token) {
+  const roomId = option('room', 'A-0-15');
+  const room = await announceSensors(client, token, roomId);
+  const duration = numberOption('duration', 900);
+  const started = Date.now();
+  console.log(`Simulating ${room.sensors.length} sensor heartbeat(s) in ${roomId}.`);
+  while ((Date.now() - started) / 1000 < duration) {
+    await sleep(10_000);
+    for (const sensor of room.sensors) await publishSensorStatus(client, sensor.id, room.id);
+  }
+}
+
+async function announceSensors(client, token, roomId) {
+  const rooms = await api('/api/classrooms', { token });
+  const room = rooms.find(item => item.id === roomId);
+  if (!room) throw new Error(`Unknown classroom: ${roomId}`);
+  for (const sensor of room.sensors) await publishSensorStatus(client, sensor.id, room.id);
+  await sleep(750);
+  return room;
+}
+
 const reading = ({ device, sensor = 'S1', sessionId = null, signal = 'wifi', rssi = -70,
   timestamp = iso(), id = eventId(sensor) }) => ({
   eventId: id,
@@ -96,7 +125,7 @@ async function prepareSession(token) {
     method: 'POST', token,
     body: {
       name: `Simulator ${new Date().toLocaleString('sv-SE')}`,
-      roomId: 'UC-101',
+      roomId: option('room', 'A-0-15'),
       startsAt: iso()
     }
   });
@@ -335,6 +364,7 @@ async function demo(client, token, sessionId, personalDevice = null) {
     const elapsed = (Date.now() - started) / 1000;
     const channel = tick % 13 + 1;
     console.log(`Sniffing channel ${channel}`);
+    if (tick % 5 === 0) for (const sensor of demoSensors) await publishSensorStatus(client, sensor.id, layout.id);
     for (let index = 0; index < demoDevices.length; index++) {
       const device = demoDevices[index];
       if (elapsed < device.joinsAt) continue;
@@ -405,6 +435,7 @@ Scenarios:
   demo-assistant Assistant-owned demo with personal-device registration (UC-202)
   registration   Emit one positioned device into an active "My devices" scan
   registered-device Emit the saved device inside an active exam session
+  sensors        Emit sensor heartbeats without generating device traffic
 
 Options:
   --room <id>        Room for demo-professor/demo-assistant
@@ -429,10 +460,11 @@ async function main() {
     const client = await connectMqtt();
     try {
       const prepared = await prepareRoleDemo({ role, api, login, sleep,
-        roomId: option('room', role === 'Assistant' ? 'UC-202' : 'UC-101'),
+        roomId: option('room', 'A-0-15'),
         sessionId: option('session', null),
         assistantUsername: process.env.ASSISTANT_USERNAME ?? 'demo-asistent',
         assistantPassword: process.env.ASSISTANT_PASSWORD ?? 'AsistentDemo2026!',
+        publishSensors: token => announceSensors(client, token, option('room', 'A-0-15')),
         publishDevice: async (device, sessionId, token) => {
           const { layout } = await api(`/api/sessions/${sessionId}/layout`, { token });
           const sensor = layout.sensors[0].id;
@@ -458,14 +490,23 @@ async function main() {
     finally { await new Promise(resolve => client.end(false, {}, resolve)); }
     return;
   }
+  if (command === 'sensors') {
+    const token = await login();
+    const client = await connectMqtt();
+    try { await sensorHeartbeats(client, token); }
+    finally { await new Promise(resolve => client.end(false, {}, resolve)); }
+    return;
+  }
   const suppliedSession = option('session', null);
   const requiresToken = !suppliedSession || ['suite', 'whitelist', 'localization', 'demo'].includes(command);
   const token = requiresToken ? await login() : null;
-  const prepared = suppliedSession
-    ? { token, sessionId: suppliedSession }
-    : await prepareSession(token);
   const client = await connectMqtt();
   try {
+    let prepared = { token, sessionId: suppliedSession };
+    if (!suppliedSession) {
+      await announceSensors(client, token, option('room', 'A-0-15'));
+      prepared = await prepareSession(token);
+    }
     if (command === 'suite') {
       await normal(client, prepared.sessionId);
       await whitelisted(client, prepared.token, prepared.sessionId);

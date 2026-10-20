@@ -21,3 +21,13 @@
 <main>
   <router-outlet></router-outlet>
 </main>
+
+<aside class="toast-stack" aria-live="assertive" aria-label="Nova upozorenja">
+  @for(toast of realtime.toasts(); track toast.id){
+    <article class="alert-toast" [class.critical]="toast.riskScore>=85">
+      <span class="toast-icon material-symbols-outlined" aria-hidden="true">warning</span>
+      <div><strong>Novi sumnjiv signal</strong><p>{{signalLabel(toast.signalType)}} · Rizik {{toast.riskScore}}/100</p><small>{{toast.createdAt | date:'HH:mm:ss'}}</small><a routerLink="/alerts" (click)="realtime.dismissToast(toast.id)">Otvori alarme</a></div>
+      <button type="button" class="toast-close" aria-label="Zatvori obaveštenje" (click)="realtime.dismissToast(toast.id)"><span class="material-symbols-outlined">close</span></button>
+    </article>
+  }
+</aside>

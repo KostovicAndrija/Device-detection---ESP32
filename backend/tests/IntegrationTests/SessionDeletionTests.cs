@@ -78,7 +78,7 @@ public sealed class SessionDeletionTests
         db.AddRange(session, device);
         var sessionId = session.Id.ToString();
         db.DeviceObservations.Add(DeviceObservation.Create(device.Id, "S1", sessionId, "bluetooth", -40, now));
-        db.Alerts.Add(Alert.Create(device.Id, sessionId, 80, "test", now));
+        db.Alerts.Add(Alert.Create(device.Id, sessionId, 80, "wifi", "test", now));
         db.WhitelistEntries.Add(WhitelistEntry.Create(sessionId, "student", "delete-device", now, null));
         await db.SaveChangesAsync();
 

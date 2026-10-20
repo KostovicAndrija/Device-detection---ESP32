@@ -1,5 +1,5 @@
 // Both demonstrations use the same traffic generator and the application's public API.
-export async function prepareRoleDemo({ role, api, login, publishDevice, sleep, roomId, sessionId,
+export async function prepareRoleDemo({ role, api, login, publishDevice, publishSensors, sleep, roomId, sessionId,
   assistantUsername, assistantPassword }) {
   let token;
   if (role === 'Assistant') {
@@ -40,6 +40,7 @@ export async function prepareRoleDemo({ role, api, login, publishDevice, sleep, 
       }
     }
   }
+  if (!sessionId) await publishSensors(token);
   const session = sessionId
     ? await api(`/api/sessions/${sessionId}`, { token })
     : await api('/api/sessions/start-for-room', { method: 'POST', token,

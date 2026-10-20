@@ -73,6 +73,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddApplication();
 builder.Services.Configure<LocalizationOptions>(
     builder.Configuration.GetSection(LocalizationOptions.SectionName));
+builder.Services.AddOptions<DeskRiskOptions>()
+    .Bind(builder.Configuration.GetSection(DeskRiskOptions.SectionName))
+    .Validate(o => o.IsValid(), "Neispravni kriterijumi kritične klupe u DeskRisk konfiguraciji.")
+    .ValidateOnStart();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Application.Abstractions.Security.ICurrentUser, HttpCurrentUser>();

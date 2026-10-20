@@ -25,4 +25,7 @@ export class Alerts implements OnInit, OnDestroy {
       items.map(x => x.id === alert.id ? { ...x, acknowledgedAt: new Date().toISOString() } : x)));
   }
   severity(score: number): string { return score >= 85 ? 'high' : score >= 70 ? 'medium' : 'low'; }
+  signalLabel(type: string): string {
+    return ({ wifi: 'Wi-Fi', ble: 'Bluetooth LE', bluetooth: 'Bluetooth', bluetooth_pairing: 'Bluetooth uparivanje' } as Record<string, string>)[type] ?? 'Nepoznat signal';
+  }
 }

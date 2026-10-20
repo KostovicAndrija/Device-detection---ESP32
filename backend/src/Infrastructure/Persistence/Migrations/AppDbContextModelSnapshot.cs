@@ -55,6 +55,12 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("session_id");
 
+                    b.Property<string>("SignalType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("signal_type");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SessionId", "CreatedAt");
@@ -348,6 +354,39 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId", "ExpiresAt");
 
                     b.ToTable("refresh_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SensorNode", b =>
+                {
+                    b.Property<string>("ClassroomId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("classroom_id");
+
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("sensor_id");
+
+                    b.Property<string>("FirmwareVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("firmware_version");
+
+                    b.Property<bool>("IsSimulated")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_simulated");
+
+                    b.Property<DateTimeOffset>("LastHeartbeatAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_heartbeat_at");
+
+                    b.HasKey("ClassroomId", "Id");
+
+                    b.HasIndex("LastHeartbeatAt");
+
+                    b.ToTable("sensor_nodes", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.StaffDevice", b =>

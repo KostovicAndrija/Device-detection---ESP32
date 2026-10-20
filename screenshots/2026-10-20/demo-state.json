@@ -1,0 +1,13 @@
+{
+  "roomId": "A-0-15",
+  "roomName": "Učionica A-0-15",
+  "sessionId": "bda0ef7f-ba45-4b93-b15e-4cd316f5926d",
+  "registrationRoomId": "DEMO-REG",
+  "offlineRoomId": "DEMO-OFF",
+  "url": "http://localhost:4200/floor-map?room=A-0-15&session=bda0ef7f-ba45-4b93-b15e-4cd316f5926d",
+  "criticalDesk": "K-03",
+  "warningDesk": "K-08",
+  "deviceCount": 3,
+  "controlPort": 7120,
+  "startedAt": "2026-10-20T17:49:45.236Z"
+}

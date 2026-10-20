@@ -114,6 +114,40 @@ postepeno nestaju i ponovo aktiviraju:
 docker compose --profile tools run --rm --build simulator demo
 ```
 
+Mapa prikazuje status svakog senzora, uvećane indikatore nepoznatih uređaja i
+kritične klupe izračunate iz 15-sekundnih intervala. Za demonstraciju samo
+heartbeat-a senzora, bez saobraćaja uređaja, pokrenuti:
+
+```powershell
+docker compose --profile tools run --rm --build simulator sensors --room A-0-15 --duration 900
+```
+
+`demo` scenario automatski šalje i heartbeat poruke. Praćenje se ne može
+pokrenuti dok sva tri senzora nisu aktivna.
+
+### Podešavanje kriterijuma kritične klupe
+
+Kriterijumi se menjaju u sekciji `DeskRisk` datoteke
+`backend/src/Api/appsettings.json`. Formula je `R = 100 × max(A_tip / N)`, gde
+je `A_tip` broj aktivnih intervala iste vrste signala kod iste klupe, a `N`
+ukupan broj intervala u prozoru. Više identifikatora ili poruka u istom intervalu
+računa se jednom. Podrazumevano se posmatra 5 intervala od 15 sekundi; prag
+kritičnosti je 60 (3/5), a sumnjive klupe 40 (2/5). Prihvataju se samo
+neodobreni signali potvrđeni sa najmanje 2 senzora, uz pouzdanost lokacije ≥35%,
+udaljenost od klupe ≤0,75 m i razmak očitavanja senzora ≤5 sekundi. Identifikator
+se koristi za povezivanje očitavanja različitih senzora, ne za povećanje rizika.
+Broj identifikatora ne predstavlja pouzdan broj fizičkih uređaja.
+Na mapi odeljak „Podešavanja detekcije” učitava početne vrednosti iz JSON-a.
+Korisnik menja trajanje i broj intervala i pragove; primer odmah prikazuje
+trajanje prozora i broj aktivnih intervala potreban za svaku oznaku. Dugme
+„Primeni na prikaz” ponovo računa klupe na serveru iz sačuvanih očitavanja.
+Promene važe za otvoreni prikaz, ne menjaju globalnu konfiguraciju ni alarme
+za uređaje. „Vrati početna podešavanja” vraća vrednosti učitane iz JSON-a.
+Reprodukcija koristi istorijski trenutak i iste izabrane kriterijume.
+Za trajnu promenu početnih vrednosti izmeniti JSON. Posle izmene JSON-a treba
+ponovo pokrenuti API; kod Docker pokretanja potrebno je ponovo izgraditi API
+image.
+
 ## Konfiguracija i tajne
 
 Produkcione vrednosti ne treba čuvati u repozitorijumu. Koristiti environment varijable:

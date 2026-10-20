@@ -15,9 +15,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<StaffDevice> StaffDevices => Set<StaffDevice>();
     public DbSet<Classroom> Classrooms => Set<Classroom>();
+    public DbSet<SensorNode> SensorNodes => Set<SensorNode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<SensorNode>(entity => {
+            entity.ToTable("sensor_nodes");
+            entity.HasKey(x => new { x.ClassroomId, x.Id });
+            entity.Property(x => x.ClassroomId).HasColumnName("classroom_id").HasMaxLength(64);
+            entity.Property(x => x.Id).HasColumnName("sensor_id").HasMaxLength(64);
+            entity.Property(x => x.LastHeartbeatAt).HasColumnName("last_heartbeat_at");
+            entity.Property(x => x.FirmwareVersion).HasColumnName("firmware_version").HasMaxLength(64);
+            entity.Property(x => x.IsSimulated).HasColumnName("is_simulated");
+            entity.HasIndex(x => x.LastHeartbeatAt);
+        });
         modelBuilder.Entity<Classroom>(entity => {
             entity.ToTable("classrooms"); entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasMaxLength(64);
@@ -75,6 +86,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.DeviceId).HasColumnName("device_id").IsRequired();
             entity.Property(x => x.SessionId).HasColumnName("session_id").HasMaxLength(128);
             entity.Property(x => x.RiskScore).HasColumnName("risk_score").IsRequired();
+            entity.Property(x => x.SignalType).HasColumnName("signal_type").HasMaxLength(32).IsRequired();
             entity.Property(x => x.Reason).HasColumnName("reason").HasMaxLength(300).IsRequired();
             entity.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
             entity.Property(x => x.AcknowledgedAt).HasColumnName("acknowledged_at");

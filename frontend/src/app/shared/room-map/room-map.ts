@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { DevicePosition } from '../../core/services/api';
+import { DeskRisk, DevicePosition, SensorStatus } from '../../core/services/api';
 import { BoardLocation, computerLabel, ComputerLocation, ComputerSlot, layoutComputers, RoomLayout, roomBoards } from '../../core/services/rooms';
 
 @Component({
@@ -12,6 +12,8 @@ import { BoardLocation, computerLabel, ComputerLocation, ComputerSlot, layoutCom
 export class RoomMapComponent {
   @Input({required: true}) room!: RoomLayout;
   @Input() positions: DevicePosition[] = [];
+  @Input() deskRisks: DeskRisk[] = [];
+  @Input() sensorStatuses: SensorStatus[] = [];
   @Input() viewTime = Date.now();
   @Input() editable = false;
   @Input() fadeDevices = false;
@@ -28,6 +30,19 @@ export class RoomMapComponent {
   sensorY(y: number): number { return Math.max(this.fontSize() * 1.4, Math.min(this.room.height - this.fontSize() * 1.4, y)); }
   computerSlots(desk: ComputerLocation): ComputerSlot[] { return layoutComputers(desk, this.deskWidth(desk)); }
   computerLabel(deskIndex: number, slotIndex: number): string { return computerLabel(this.room, deskIndex, slotIndex); }
+  deskRisk(id: string): DeskRisk | undefined { return this.deskRisks.find(x => x.deskId === id); }
+  sensorState(id: string): SensorStatus['state'] { return this.sensorStatuses.find(x => x.id === id)?.state ?? 'offline'; }
+  sensorStatus(id: string): SensorStatus | undefined { return this.sensorStatuses.find(x => x.id === id); }
+  deskTitle(desk: ComputerLocation): string {
+    const risk = this.deskRisk(desk.id);
+    const base = `${desk.id} · ${this.deskWidth(desk).toFixed(2)} × ${this.deskHeight(desk).toFixed(2)} m`;
+    return risk ? `${base} · učestalost ${risk.score}/100 · ${this.signalLabel(risk.signalType ?? '')} · aktivno ${risk.activeBuckets}/${risk.totalBuckets} intervala` : base;
+  }
+  sensorTitle(id: string, model: string): string {
+    const status = this.sensorStatus(id);
+    const state = this.sensorState(id) === 'online' ? 'aktivan' : this.sensorState(id) === 'stale' ? 'kasni' : 'nije aktivan';
+    return `${id} · ${model} · ${state}${status ? ` · ${status.isSimulated ? 'simuliran' : 'fizički'}` : ''}`;
+  }
   shortId(id: string): string { return id.slice(0, 4).toUpperCase(); }
   signalLabel(type?: string): string { return type === 'wifi' ? 'Wi-Fi' : type === 'bluetooth' ? 'Bluetooth' : type === 'mixed' ? 'Wi-Fi/BT' : 'Nepoznato'; }
   signalIcon(type?: string): string { return type === 'wifi' ? 'wifi' : type === 'bluetooth' ? 'bluetooth' : type === 'mixed' ? 'settings_input_antenna' : 'device_unknown'; }

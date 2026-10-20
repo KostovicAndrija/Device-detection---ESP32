@@ -1,0 +1,158 @@
+[
+  {
+    "file": "01-prijava.png",
+    "title": "Prijava korisnika"
+  },
+  {
+    "file": "02-prijava-greska.png",
+    "title": "Pogrešni podaci za prijavu"
+  },
+  {
+    "file": "03-profesor-pregled.png",
+    "title": "Pregled učionica i istorije sesija"
+  },
+  {
+    "file": "04-mapa-uzivo.png",
+    "title": "Mapa A-0-15: crvena K-03, narandžasta K-08 i tri uređaja"
+  },
+  {
+    "file": "05-mapa-detalj.png",
+    "title": "Detalj učionice sa kritičnom i sumnjivom klupom"
+  },
+  {
+    "file": "06-mapa-uvecana.png",
+    "title": "Uvećana mapa učionice"
+  },
+  {
+    "file": "07-formula-i-podesavanja.png",
+    "title": "Formula, aktivni intervali i pragovi"
+  },
+  {
+    "file": "08-promena-vremenskog-prozora.png",
+    "title": "Primer uticaja produženja prozora na 150 sekundi"
+  },
+  {
+    "file": "09-primenjena-podesavanja.png",
+    "title": "Primenjeni novi kriterijumi na proračun klupa"
+  },
+  {
+    "file": "10-uputstvo-za-koriscenje.png",
+    "title": "Uputstvo za testiranje i tumačenje rezultata"
+  },
+  {
+    "file": "11-reprodukcija-sesije.png",
+    "title": "Reprodukcija sačuvanih očitavanja"
+  },
+  {
+    "file": "12-ucionica-raspored.png",
+    "title": "Raspored klupa, računara i senzora"
+  },
+  {
+    "file": "13-nova-ucionica.png",
+    "title": "Dijalog dodavanja učionice"
+  },
+  {
+    "file": "14-podaci-ucionice.png",
+    "title": "Dimenzije i opis učionice"
+  },
+  {
+    "file": "15-izmena-klupe.png",
+    "title": "Koordinate, dimenzije i broj računara na klupi"
+  },
+  {
+    "file": "16-dodavanje-klupe.png",
+    "title": "Dijalog dodavanja klupe"
+  },
+  {
+    "file": "17-kalibracija-senzora.png",
+    "title": "Pozicija senzora i RSSI kalibracija"
+  },
+  {
+    "file": "18-dodavanje-senzora.png",
+    "title": "Dijalog dodavanja senzora"
+  },
+  {
+    "file": "19-aktivni-uredjaji.png",
+    "title": "Tabela detektovanih uređaja"
+  },
+  {
+    "file": "20-pretraga-uredjaja.png",
+    "title": "Filtriranje uređaja po tipu signala"
+  },
+  {
+    "file": "21-alarmi.png",
+    "title": "Alarmi sa vrstom signala i statusom"
+  },
+  {
+    "file": "22-obradjen-alarm.png",
+    "title": "Potvrđen i obrađen alarm"
+  },
+  {
+    "file": "23-dozvoljeni-uredjaji.png",
+    "title": "Dozvoljeni telefon nastavnika i obrazac za dodavanje"
+  },
+  {
+    "file": "24-dodavanje-dozvoljenog-uredjaja.png",
+    "title": "Popunjen obrazac odobravanja uređaja"
+  },
+  {
+    "file": "25-izvestaj-sesije.png",
+    "title": "Izveštaj sa brojem merenja, uređaja i alarma"
+  },
+  {
+    "file": "26-novi-asistent.png",
+    "title": "Kreiranje naloga asistenta"
+  },
+  {
+    "file": "27-nalog-asistenta.png",
+    "title": "Rezultat kreiranja demo naloga asistenta"
+  },
+  {
+    "file": "28-blokada-neaktivni-senzori.png",
+    "title": "Praćenje je blokirano ako sva tri senzora nisu aktivna"
+  },
+  {
+    "file": "29-registracija-blokirana-tokom-pracenja.png",
+    "title": "Registracija ličnih uređaja je blokirana dok korisnik ima aktivno praćenje"
+  },
+  {
+    "file": "30-asistent-pregled.png",
+    "title": "Pregled aplikacije iz uloge asistenta"
+  },
+  {
+    "file": "31-asistent-registracija-01-skeniranje.png",
+    "title": "Pokretanje registracije ličnog uređaja"
+  },
+  {
+    "file": "31-asistent-registracija-02-izbor-uredjaja.png",
+    "title": "Izbor i imenovanje detektovanog uređaja"
+  },
+  {
+    "file": "31-asistent-registracija-03-sacuvan-uredjaj.png",
+    "title": "Uspešno registrovan lični uređaj"
+  },
+  {
+    "file": "32-asistent-aktivna-sesija.png",
+    "title": "Asistent pokreće sopstvenu sesiju; njegov telefon je dozvoljen"
+  },
+  {
+    "file": "33-asistent-automatski-dozvoljen-uredjaj.png",
+    "title": "Lični uređaj asistenta automatski je dozvoljen u novoj sesiji"
+  },
+  {
+    "file": "34-asistent-zavrsena-sesija.png",
+    "title": "Zaustavljanje očitavanja i sačuvana istorija"
+  },
+  {
+    "file": "35-odjava.png",
+    "title": "Odjava i povratak na ekran prijave"
+  },
+  {
+    "file": "36-toast-obavestenje.png",
+    "title": "Toast notifikacija za novi Bluetooth signal"
+  },
+  {
+    "file": "37-zavrsna-mapa.png",
+    "title": "Završni prikaz: kritična i sumnjiva klupa sa tri uređaja"
+  }
+]

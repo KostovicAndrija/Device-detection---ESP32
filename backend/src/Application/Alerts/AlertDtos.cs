@@ -5,6 +5,7 @@ public sealed record AlertDto(
     Guid DeviceId,
     string? SessionId,
     int RiskScore,
+    string SignalType,
     string Reason,
     DateTimeOffset CreatedAt,
     DateTimeOffset? AcknowledgedAt);

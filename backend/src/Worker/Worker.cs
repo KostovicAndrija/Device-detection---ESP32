@@ -1,6 +1,10 @@
 using Application.Ingestion;
 using MQTTnet;
 using MQTTnet.Client;
+using System.Text.Json;
+using Domain.Entities;
+using Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Worker;
 
@@ -23,6 +27,24 @@ public sealed class MqttWorker(
             try
             {
                 using var scope = serviceScopeFactory.CreateScope();
+                var topic = messageEvent.ApplicationMessage.Topic;
+                if (topic.EndsWith("/status", StringComparison.OrdinalIgnoreCase))
+                {
+                    var json = messageEvent.ApplicationMessage.PayloadSegment.AsMemory();
+                    if (json.IsEmpty) return;
+                    var status = JsonSerializer.Deserialize<SensorStatusPayload>(json.Span,
+                        new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                    if (status is null || string.IsNullOrWhiteSpace(status.SensorId) || string.IsNullOrWhiteSpace(status.ClassroomId)) return;
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var node = await db.SensorNodes.SingleOrDefaultAsync(x => x.Id == status.SensorId && x.ClassroomId == status.ClassroomId, stoppingToken);
+                    var timestamp = status.Timestamp ?? DateTimeOffset.UtcNow;
+                    if (timestamp > DateTimeOffset.UtcNow.AddMinutes(1)) return;
+                    if (node is null) db.SensorNodes.Add(SensorNode.Register(status.SensorId, status.ClassroomId, timestamp, status.FirmwareVersion, status.IsSimulated));
+                    else node.Heartbeat(timestamp, status.FirmwareVersion, status.IsSimulated);
+                    await db.SaveChangesAsync(stoppingToken);
+                    logger.LogDebug("Heartbeat received from sensor {SensorId} in {ClassroomId}", status.SensorId, status.ClassroomId);
+                    return;
+                }
                 var decoder = scope.ServiceProvider.GetRequiredService<ISensorMessageDecoder>();
                 var payload = messageEvent.ApplicationMessage.PayloadSegment.Array is null
                     ? null : decoder.Decode(messageEvent.ApplicationMessage.PayloadSegment.AsMemory());
@@ -57,6 +79,7 @@ public sealed class MqttWorker(
                 {
                     await mqttClient.ConnectAsync(options, stoppingToken);
                     await mqttClient.SubscribeAsync(_topic, MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce, stoppingToken);
+                    await mqttClient.SubscribeAsync("sensors/+/status", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce, stoppingToken);
                     logger.LogInformation("Connected to MQTT broker {Host}:{Port} and subscribed to {Topic}", _host, _port, _topic);
                 }
 
@@ -69,5 +92,8 @@ public sealed class MqttWorker(
             }
         }
     }
+
+    private sealed record SensorStatusPayload(string SensorId, string ClassroomId, DateTimeOffset? Timestamp,
+        string? FirmwareVersion, bool IsSimulated = false);
 
 }

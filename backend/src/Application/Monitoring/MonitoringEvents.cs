@@ -13,6 +13,7 @@ public sealed record AlertCreatedEvent(
     string DeviceHash,
     string? SessionId,
     int RiskScore,
+    string SignalType,
     string Reason,
     DateTimeOffset CreatedAt);
 

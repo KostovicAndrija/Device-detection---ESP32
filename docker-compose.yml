@@ -27,7 +27,7 @@ services:
       dockerfile: backend/src/Api/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=device_detection;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=device_detection;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres};Maximum Pool Size=40
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-device-detection-local-development-signing-key-123456}
       Hashing__Pepper: ${HASHING_PEPPER:-local-development-pepper}
       DevelopmentUser__Username: ${APP_USERNAME:-admin}
@@ -43,7 +43,7 @@ services:
       context: .
       dockerfile: backend/src/Worker/Dockerfile
     environment:
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=device_detection;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=device_detection;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres};Maximum Pool Size=40
       Mqtt__Host: mqtt
       Monitoring__HubUrl: http://api:8080/hubs/monitoring
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-device-detection-local-development-signing-key-123456}

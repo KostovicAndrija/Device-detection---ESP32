@@ -86,12 +86,12 @@ public sealed class LoggingRssiProcessingPipeline(
         if (riskScore >= 70 &&
             !await alertRepository.ExistsRecentAsync(device.Id, message.SessionId, TimeSpan.FromMinutes(2), cancellationToken))
         {
-            var alert = Alert.Create(device.Id, message.SessionId, riskScore, "Risk threshold exceeded", DateTimeOffset.UtcNow);
+            var alert = Alert.Create(device.Id, message.SessionId, riskScore, message.SignalType, "Risk threshold exceeded", DateTimeOffset.UtcNow);
             await alertRepository.AddAsync(alert, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             await monitoringEventPublisher.PublishAlertCreatedAsync(
-                new AlertCreatedEvent(alert.Id, deviceHash, message.SessionId, riskScore, alert.Reason, alert.CreatedAt),
+                new AlertCreatedEvent(alert.Id, deviceHash, message.SessionId, riskScore, alert.SignalType, alert.Reason, alert.CreatedAt),
                 cancellationToken);
         }
 

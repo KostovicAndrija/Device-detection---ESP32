@@ -11,6 +11,9 @@
       @if(sessionId){<button (click)="toggleReplay()"><span class="material-symbols-outlined" aria-hidden="true">{{replayMode()?'sensors':'history'}}</span>{{replayMode()?'Prikaz uživo':'Reprodukcija'}}</button>}
     </div>
   </header>
+  @if(preflightWarning()){
+    <section class="preflight-alert" role="alert"><span class="material-symbols-outlined">sensors_off</span><div><strong>Praćenje je blokirano — senzori nisu spremni</strong><p>Aktivno je {{onlineSensorCount()}}/{{sensorStatuses().length || selectedClassroom().sensors.length}} senzora. Za pokretanje moraju biti aktivna sva tri senzora.</p><div class="toolbar"><button (click)="startReading()">Ponovo proveri</button><button class="secondary" (click)="cancelStart()">Zatvori</button></div></div></section>
+  }
   @if(sessionId && !hasSnapshot()){<p>Starija sesija nema sačuvan raspored. Prikazan je raspoloživi raspored učionice, koji se može razlikovati od tadašnjeg.</p>}
   @if(selectedSession()?.status==='completed' && !observationCount()){<p>Nema sačuvanih očitavanja. Podaci starijih sesija možda su obrisani pre uvođenja istorije.</p>}
   @if(replayMode()) {
@@ -20,16 +23,43 @@
       <span>{{replayAt() | date:'dd.MM.yyyy HH:mm:ss'}} · {{observationCount()}} očitavanja</span>
     </div><p>Reprodukcija računa položaje iz sačuvanih očitavanja. Ne šalje nove signale i ne stvara alarme.</p>
   }
-  <div class="status-strip"><span class="status-pill"><i class="status-dot live-dot"></i>{{activeCount()}} aktivno</span><span class="status-pill"><i class="status-dot fading-dot"></i>{{fadingCount()}} nestaje</span><span class="status-pill subtle">{{replayMode()?'Istorijski prikaz':'Automatsko osvežavanje · 2 s'}}</span></div>
+  <div class="status-strip"><span class="status-pill"><i class="status-dot live-dot"></i>{{activeCount()}} aktivno</span><span class="status-pill"><i class="status-dot fading-dot"></i>{{fadingCount()}} nestaje</span><span class="status-pill" [class.sensor-problem]="onlineSensorCount()<selectedClassroom().sensors.length"><i class="status-dot sensor-dot"></i>Senzori {{onlineSensorCount()}}/{{selectedClassroom().sensors.length}}</span><span class="status-pill subtle">{{replayMode()?'Istorijski prikaz':'Automatsko osvežavanje · 2 s'}}</span></div>
+  <details class="detection-settings" aria-labelledby="detection-heading">
+    <summary class="settings-heading"><div><p class="eyebrow">Razumite rezultate</p><h3 id="detection-heading">Podešavanja detekcije</h3></div><span>Skor aktivnosti · 0–100</span><span class="material-symbols-outlined settings-chevron" aria-hidden="true">expand_more</span></summary>
+    <p class="formula">Skor klupe = 100 × broj aktivnih intervala / ukupan broj intervala</p>
+    <p>Interval je aktivan kada je kod klupe lociran bar jedan signal određene vrste. Više paketa ili MAC adresa iste vrste u istom intervalu računa se jednom. Wi-Fi i Bluetooth posmatramo zasebno; prikazujemo veći skor.</p>
+    @if(settingsError()){<p role="alert">{{settingsError()}}</p>}
+    @if(draftSettings; as settings){
+      <div class="settings-fields">
+        <label>Trajanje intervala (sekunde)<input type="number" min="1" max="300" step="1" [(ngModel)]="settings.bucketSeconds"/><small>Duži interval lakše obuhvata retke emisije. Kraći daje detaljniji prikaz ponavljanja.</small></label>
+        <label>Broj intervala<input type="number" min="2" max="1000" step="1" [(ngModel)]="settings.windowBucketCount"/><small>Više intervala produžava posmatranje. Stara aktivnost duže ostaje u rezultatu.</small></label>
+        <label>Prag upozorenja<input type="number" min="1" max="99" step="1" [(ngModel)]="settings.warningThreshold"/><small>Niži prag ranije označava klupu kao sumnjivu.</small></label>
+        <label>Prag kritične klupe<input type="number" min="2" max="100" step="1" [(ngModel)]="settings.criticalThreshold"/><small>Viši prag zahteva aktivnost u većem delu vremenskog prozora.</small></label>
+      </div>
+      @if(settingsValid){
+        <div class="settings-example" aria-live="polite">
+          <strong>Vremenski prozor: {{settings.bucketSeconds * settings.windowBucketCount}} sekundi</strong>
+          <p>{{settings.windowBucketCount}} intervala × {{settings.bucketSeconds}} s. Za upozorenje je potrebno {{requiredIntervals(settings.warningThreshold)}} aktivnih intervala; za kritičnu klupu {{requiredIntervals(settings.criticalThreshold)}}.</p>
+          <p>Primer: signal u {{settings.windowBucketCount < 3 ? settings.windowBucketCount : 3}}/{{settings.windowBucketCount}} intervala → skor {{exampleScore}} → <strong>{{exampleLevel}}</strong>.</p>
+          <small>Duži prozor ne mora povećati skor: ako broj aktivnih intervala ostane isti, njihov udeo se smanjuje.</small>
+        </div>
+      }@else{<p role="alert">Unesite cele brojeve: interval 1–300 s (najmanje {{settings.maximumSensorTimeSpreadSeconds}} s za trenutnu lokalizaciju), broj intervala 2–1000 i pragove 1–100. Prag upozorenja mora biti niži od kritičnog.</p>}
+      <div class="toolbar"><button (click)="applySettings()" [disabled]="!settingsValid || !settingsChanged">Primeni na prikaz</button><button class="secondary" (click)="resetSettings()">Vrati početna podešavanja</button></div>
+      <p class="settings-scope">Početne vrednosti dolaze iz JSON konfiguracije. Promene važe za ovaj otvoreni prikaz klupa; pragovi alarma za uređaje podešavaju se odvojeno.</p>
+      @if(appliedSettings(); as applied){<p class="applied-settings">Primenjeno: {{applied.bucketSeconds * applied.windowBucketCount}} s · {{applied.windowBucketCount}} × {{applied.bucketSeconds}} s · upozorenje {{applied.warningThreshold}} · kritično {{applied.criticalThreshold}}.@if(settingsChanged){ <strong>Izmene još nisu primenjene.</strong>}</p>}
+    }
+    <details><summary>Kako najbolje iskoristiti sistem?</summary><ol><li>Proverite da su sva tri senzora aktivna.</li><li>Testirajte praznu učionicu, pa poznati telefon na nekoliko klupa. Pozadinska aktivnost može dolaziti izvan učionice.</li><li>Ako poznati telefon retko registrujete, probajte duže intervale. Ako prazne klupe često prelaze prag, proverite pozadinske izvore i lokalizaciju.</li><li>Menjajte jedno podešavanje odjednom i uporedite rezultate pre i posle promene.</li></ol><p>Skor pokazuje učestalost locirane aktivnosti, a ne verovatnoću korišćenja telefona. Različite MAC adrese mogu pripadati istom telefonu. Izostanak detekcije ne potvrđuje da telefona nema. Pri pokretanju prozor još nema punu istoriju: sačekajte jedno njegovo trajanje za potpunije poređenje.</p></details>
+  </details>
+  @if(sessionId){<section class="risk-summary"><div class="risk-summary-head"><div><p class="eyebrow">Analiza učestalosti</p><h3>Najkritičnija mesta</h3></div></div><div class="risk-cards">@for(risk of topRisks();track risk.deskId){<article [class.critical]="risk.level==='critical'"><strong>{{risk.deskId}}</strong><span class="risk-score">{{risk.score}}</span><small>Aktivnost u {{risk.activeBuckets}}/{{risk.totalBuckets}} intervala · {{risk.signalType==='wifi'?'Wi-Fi':'Bluetooth'}}</small></article>}@empty{<p>Nijedna klupa trenutno ne prelazi prag sumnjive učestalosti.</p>}</div></section>}
   <section class="room-shell" [class.expanded]="mapExpanded()" aria-label="Plan učionice">
     <div class="room-label"><span>{{selectedClassroom().name | uppercase}} · {{visiblePositions().length}} UREĐAJA U PROSTORU</span><button type="button" class="map-size-button" (click)="toggleMapSize()" [attr.aria-pressed]="mapExpanded()" [attr.title]="mapExpanded()?'Smanji prikaz mape':'Uvećaj prikaz mape'"><span class="material-symbols-outlined" aria-hidden="true">{{mapExpanded()?'close_fullscreen':'open_in_full'}}</span>{{mapExpanded()?'Smanji mapu':'Uvećaj mapu'}}</button></div>
     <div class="drawing-area">
       <div class="width-label">{{selectedClassroom().width | number:'1.0-4'}} m</div>
-      <app-room-map [room]="selectedClassroom()" [positions]="visiblePositions()" [viewTime]="viewTime()" [fadeDevices]="true" [expanded]="mapExpanded()"/>
+      <app-room-map [room]="selectedClassroom()" [positions]="visiblePositions()" [deskRisks]="deskRisks()" [sensorStatuses]="sensorStatuses()" [viewTime]="viewTime()" [fadeDevices]="true" [expanded]="mapExpanded()"/>
       <span class="height-label">{{selectedClassroom().height | number:'1.0-4'}} m</span>
       @if(!sessionId){<div class="empty-room">Učionica je spremna. Klikni „Počni očitavanje”.</div>}@else if(!positions().length && !loading()){<div class="empty-room">{{replayMode()?'Nema očitavanja u ovom trenutku.':'Čekam očitavanja senzora…'}}</div>}
     </div>
   </section>
-  <div class="map-legend"><span><i class="legend-device"></i>Nepoznat uređaj</span><span><i class="legend-allowed"></i>Dozvoljen uređaj</span><span><i class="legend-sensor"></i>Senzor</span><span><i class="legend-desk"></i>Računar</span><span class="last-update">@if(lastRefresh()){Poslednje osvežavanje: {{lastRefresh()!.toLocaleTimeString()}}}</span></div>
+  <div class="map-legend"><span><i class="legend-device"></i>Nepoznat uređaj</span><span><i class="legend-allowed"></i>Dozvoljen uređaj</span><span><i class="legend-warning"></i>Sumnjiva klupa</span><span><i class="legend-critical"></i>Kritična klupa</span><span><i class="legend-sensor"></i>Aktivan senzor</span><span class="last-update">@if(lastRefresh()){Poslednje osvežavanje: {{lastRefresh()!.toLocaleTimeString()}}}</span></div>
   <app-device-registration [roomId]="roomId" [monitoringActive]="selectedSession()?.status==='active'"/>
 </section>

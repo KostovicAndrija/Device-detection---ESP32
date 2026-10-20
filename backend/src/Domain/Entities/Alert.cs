@@ -10,11 +10,12 @@ public sealed class Alert
     public Guid DeviceId { get; private set; }
     public string? SessionId { get; private set; }
     public int RiskScore { get; private set; }
+    public string SignalType { get; private set; } = "unknown";
     public string Reason { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? AcknowledgedAt { get; private set; }
 
-    public static Alert Create(Guid deviceId, string? sessionId, int riskScore, string reason, DateTimeOffset createdAt)
+    public static Alert Create(Guid deviceId, string? sessionId, int riskScore, string signalType, string reason, DateTimeOffset createdAt)
     {
         if (deviceId == Guid.Empty)
         {
@@ -36,6 +37,7 @@ public sealed class Alert
             DeviceId = deviceId,
             SessionId = string.IsNullOrWhiteSpace(sessionId) ? null : sessionId.Trim(),
             RiskScore = riskScore,
+            SignalType = string.IsNullOrWhiteSpace(signalType) ? "unknown" : signalType.Trim().ToLowerInvariant(),
             Reason = reason.Trim(),
             CreatedAt = createdAt
         };

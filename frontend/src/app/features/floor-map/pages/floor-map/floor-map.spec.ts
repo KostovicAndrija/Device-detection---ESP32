@@ -16,7 +16,10 @@ describe('FloorMap', () => {
       imports: [FloorMap],
       providers: [provideHttpClient(), provideRouter([]),
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
-        { provide: Api, useValue: { sessions: () => of([]), positions: () => of([]) } }]
+        { provide: Api, useValue: { sessions: () => of([]), positions: () => of([]), sensorStatus: () => of([]),
+          detectionSettings: () => of({bucketSeconds:15,windowBucketCount:5,warningThreshold:40,criticalThreshold:60,
+            minimumSensorCount:2,maximumSensorTimeSpreadSeconds:5,minimumPositionConfidence:.35,deskAssociationRadiusMeters:.75}),
+          previewZones: () => of([]) } }]
     })
     .compileComponents();
 
@@ -27,6 +30,29 @@ describe('FloorMap', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('explains longer windows without applying unfinished edits', () => {
+    component.draftSettings!.windowBucketCount=10;
+    expect(component.exampleScore).toBe(30);
+    expect(component.requiredIntervals(60)).toBe(6);
+    expect(component.appliedSettings()!.windowBucketCount).toBe(5);
+    component.applySettings();
+    expect(component.appliedSettings()!.windowBucketCount).toBe(10);
+    component.resetSettings();
+    expect(component.draftSettings!.windowBucketCount).toBe(5);
+  });
+
+  it('rejects reversed thresholds and explains decisions using unrounded scores', () => {
+    component.draftSettings!.warningThreshold=70;
+    expect(component.settingsValid).toBeFalse();
+    component.applySettings();
+    expect(component.appliedSettings()!.warningThreshold).toBe(40);
+    component.draftSettings!.warningThreshold=20;
+    component.draftSettings!.criticalThreshold=43;
+    component.draftSettings!.windowBucketCount=7;
+    expect(component.exampleScore).toBe(43);
+    expect(component.exampleLevel).toBe('sumnjiva');
   });
 
   it('toggles the enlarged map and closes it with the collapse action', () => {

@@ -7,6 +7,11 @@
 .board-shape text { fill: #24483f; font-weight: 800; }
 .desk-shape > rect:first-of-type { fill: #e8d5b5; stroke: #a9834c; stroke-width: .018; }
 .desk-shape.teacher-desk > rect:first-of-type { fill: #d6b98c; stroke: #8b6535; }
+.desk-shape.risk-warning > rect:first-of-type { fill: #fed7aa; stroke: #f97316; stroke-width: .055; filter: drop-shadow(0 0 .12px #f9731688); }
+.desk-shape.risk-critical > rect:first-of-type { animation: desk-danger 1.35s ease-in-out infinite alternate; fill: #fecaca; stroke: #dc2626; stroke-width: .075; filter: drop-shadow(0 0 .18px #dc2626aa); }
+.risk-badge circle { fill: #dc2626; stroke: white; stroke-width: .025; }
+.risk-warning .risk-badge circle { fill: #ea580c; }
+.risk-badge text { fill: white; font-weight: 900; }
 .desk-shape.editable, .sensor-shape.editable { cursor: pointer; outline: none; }
 .desk-shape.editable:hover > rect:first-of-type, .desk-shape.editable:focus-visible > rect:first-of-type { stroke: #2563eb; stroke-width: .04; }
 .computer-screen { fill: #334155; stroke: #0f172a; stroke-width: .012; }
@@ -17,15 +22,22 @@
 .sensor-shape circle { fill: #0d9488; }
 .sensor-shape rect { fill: #0f766e; }
 .sensor-shape text { fill: white; font-weight: 800; }
+.sensor-shape.online circle, .sensor-shape.online rect { fill: #16a34a; }
+.sensor-shape.stale circle, .sensor-shape.stale rect { fill: #d97706; }
+.sensor-shape.offline circle, .sensor-shape.offline rect { fill: #64748b; }
+.sensor-shape.offline { opacity: .72; }
 .sensor-shape.editable:hover rect, .sensor-shape.editable:focus-visible rect { fill: #2563eb; }
 .device-marker { pointer-events: none; transition: opacity 1s linear; }
-.device-dot { fill: #dc2626; stroke: white; stroke-width: .045; filter: drop-shadow(0 .06px .1px #991b1b88); }
+.device-dot { fill: #dc2626; stroke: white; stroke-width: .06; filter: drop-shadow(0 .08px .16px #991b1bcc); }
 .device-icon { fill: white; font-family: 'Material Symbols Outlined'; font-weight: 400; }
-.device-label { fill: #172033; font-weight: 800; paint-order: stroke; stroke: white; stroke-linejoin: round; stroke-width: .09; }
-.device-pulse { fill: none; opacity: 0; stroke: #ef4444; stroke-width: .025; }
+.device-label-bg { fill: #991b1b; opacity: .94; stroke: white; stroke-width: .025; }
+.device-label { fill: white; font-weight: 900; letter-spacing: .02em; }
+.device-pulse { fill: #ef444422; opacity: 0; stroke: #ef4444; stroke-width: .04; }
 .device-marker.live .device-pulse { animation: pulse 2s infinite; }
 .device-marker.fading .device-dot { filter: grayscale(.45); }
 .device-marker.whitelisted .device-dot { fill: #16a34a; filter: drop-shadow(0 .06px .1px #16653488); }
 .device-marker.whitelisted .device-pulse { stroke: #22c55e; }
-@keyframes pulse { 0% { opacity: .8; r: .22; } 80%, 100% { opacity: 0; r: .38; } }
+.device-marker.whitelisted .device-label-bg { fill: #166534; }
+@keyframes pulse { 0% { opacity: .9; r: .3; } 80%, 100% { opacity: 0; r: .62; } }
+@keyframes desk-danger { from { fill: #fecaca; } to { fill: #f87171; } }
 @media (max-width: 760px) { .floor-plan { height: 60vh; min-height: 350px; } .floor-plan.compact { min-height: 260px; } }

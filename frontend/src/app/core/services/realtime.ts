@@ -12,6 +12,13 @@ export interface RealtimeDeviceState {
   riskScore: number;
 }
 
+export interface AlertToast {
+  id: string;
+  signalType: string;
+  riskScore: number;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class Realtime {
   private readonly auth = inject(AuthService);
@@ -19,6 +26,7 @@ export class Realtime {
 
   readonly devices = signal<RealtimeDeviceState[]>([]);
   readonly alerts = signal<Alert[]>([]);
+  readonly toasts = signal<AlertToast[]>([]);
   readonly selectedSession = signal<string | null>(null);
   readonly connectionStatus = signal<'connecting' | 'connected' | 'disconnected'>('disconnected');
   readonly connectedDevices = computed(() => this.devices().length);
@@ -44,18 +52,7 @@ export class Realtime {
       capturedAt: event.capturedAt,
       riskScore: event.riskScore
     }));
-    this.connection.on('alertCreated', event => this.alerts.update(current => [
-      {
-        id: event.alertId,
-        deviceId: event.deviceHash,
-        sessionId: event.sessionId,
-        riskScore: event.riskScore,
-        reason: event.reason,
-        createdAt: event.createdAt,
-        acknowledgedAt: null
-      },
-      ...current
-    ]));
+    this.connection.on('alertCreated', event => this.handleAlertCreated(event));
     this.connection.on('alertAcknowledged', event => this.alerts.update(current =>
       current.map(item => item.id === event.alertId
         ? { ...item, acknowledgedAt: event.acknowledgedAt }
@@ -76,6 +73,7 @@ export class Realtime {
   async disconnect(): Promise<void> {
     this.devices.set([]);
     this.alerts.set([]);
+    this.toasts.set([]);
     this.selectedSession.set(null);
     await this.connection?.stop();
     this.connectionStatus.set('disconnected');
@@ -83,6 +81,27 @@ export class Realtime {
 
   setInitialAlerts(alerts: Alert[]): void {
     this.alerts.set(alerts);
+  }
+
+  dismissToast(id: string): void {
+    this.toasts.update(current => current.filter(x => x.id !== id));
+  }
+
+  private handleAlertCreated(event: { alertId: string; deviceHash: string; sessionId: string | null; riskScore: number; signalType: string; reason: string; createdAt: string }): void {
+    if (this.alerts().some(x => x.id === event.alertId)) return;
+    const alert: Alert = {
+      id: event.alertId,
+      deviceId: event.deviceHash,
+      sessionId: event.sessionId,
+      riskScore: event.riskScore,
+      signalType: event.signalType,
+      reason: event.reason,
+      createdAt: event.createdAt,
+      acknowledgedAt: null
+    };
+    this.alerts.update(current => [alert, ...current]);
+    this.toasts.update(current => [{ id: alert.id, signalType: alert.signalType, riskScore: alert.riskScore, createdAt: alert.createdAt }, ...current].slice(0, 4));
+    setTimeout(() => this.dismissToast(alert.id), 10_000);
   }
 
   private upsertDevice(state: RealtimeDeviceState): void {

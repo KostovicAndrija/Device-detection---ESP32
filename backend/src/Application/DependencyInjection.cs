@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<ILocalizationService, LocalizationService>();
         services.AddScoped<IPositionEstimator, RssiPositionEstimator>();
         services.AddScoped<IPositionQueryService, PositionQueryService>();
+        services.AddScoped<IZoneRiskService, ZoneRiskService>();
+        services.AddOptions<DeskRiskOptions>();
         services.AddSingleton<IPositionSmoother, KalmanPositionSmoother>();
         services.AddOptions<LocalizationOptions>();
         services.AddScoped<IExamSessionService, ExamSessionService>();

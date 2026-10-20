@@ -32,5 +32,5 @@ public sealed class AlertService(
     }
 
     private static AlertDto Map(Domain.Entities.Alert alert)
-        => new(alert.Id, alert.DeviceId, alert.SessionId, alert.RiskScore, alert.Reason, alert.CreatedAt, alert.AcknowledgedAt);
+        => new(alert.Id, alert.DeviceId, alert.SessionId, alert.RiskScore, alert.SignalType, alert.Reason, alert.CreatedAt, alert.AcknowledgedAt);
 }

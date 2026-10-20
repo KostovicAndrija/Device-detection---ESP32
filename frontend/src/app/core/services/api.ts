@@ -25,6 +25,7 @@ export interface Alert {
   deviceId: string;
   sessionId: string | null;
   riskScore: number;
+  signalType: string;
   reason: string;
   createdAt: string;
   acknowledgedAt: string | null;
@@ -49,6 +50,39 @@ export interface DevicePosition {
   capturedAt: string;
   sensorCount: number;
   isWhitelisted: boolean;
+}
+
+export interface DeskRisk {
+  signalType?: string | null;
+  deskId: string;
+  score: number;
+  level: 'normal' | 'warning' | 'critical';
+  deviceCount: number;
+  activeBuckets: number;
+  totalBuckets: number;
+  normalizedFrequency: number;
+  averageConfidence: number;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+}
+
+export interface DetectionSettings {
+  bucketSeconds: number;
+  windowBucketCount: number;
+  warningThreshold: number;
+  criticalThreshold: number;
+  minimumSensorCount: number;
+  maximumSensorTimeSpreadSeconds: number;
+  minimumPositionConfidence: number;
+  deskAssociationRadiusMeters: number;
+}
+
+export interface SensorStatus {
+  id: string;
+  state: 'online' | 'stale' | 'offline';
+  lastHeartbeatAt: string | null;
+  firmwareVersion: string | null;
+  isSimulated: boolean;
 }
 
 export interface SessionReport {
@@ -111,6 +145,23 @@ export class Api {
 
   positions(sessionId: string): Observable<DevicePosition[]> {
     return this.http.get<DevicePosition[]>(`${this.restBaseUrl}/sessions/${sessionId}/positions`);
+  }
+
+  zones(sessionId: string, windowMinutes = 0): Observable<DeskRisk[]> {
+    return this.http.get<DeskRisk[]>(`${this.restBaseUrl}/sessions/${sessionId}/zones`, { params: { windowMinutes } });
+  }
+
+  detectionSettings(): Observable<DetectionSettings> {
+    return this.http.get<DetectionSettings>('/api/detection-settings');
+  }
+
+  previewZones(sessionId: string, settings: DetectionSettings, at?: string): Observable<DeskRisk[]> {
+    return this.http.post<DeskRisk[]>(`/api/sessions/${sessionId}/zones/preview`, settings,
+      { params: at ? { at } : {} });
+  }
+
+  sensorStatus(classroomId: string): Observable<SensorStatus[]> {
+    return this.http.get<SensorStatus[]>(`${this.restBaseUrl}/classrooms/${classroomId}/sensor-status`);
   }
 
   whitelist(sessionId: string): Observable<WhitelistEntry[]> {
